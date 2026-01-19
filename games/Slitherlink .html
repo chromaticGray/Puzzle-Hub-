@@ -1,0 +1,1263 @@
+
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>Slitherlink</title>
+  <style>
+    :root {
+      --bg-color: #f8f9fa;
+      --text-color: #222;
+      --muted: #6b7280;
+      --border-color: #e5e7eb;
+      --accent-color: #3b82f6;
+      --error-color: #ef4444;
+      --success-color: #22c55e;
+      --hint-color: #f59e0b;
+      --gold-color: #eab308;
+      --line-color: #1e40af;
+      --dot-color: #6b7280;
+      --x-color: #9ca3af;
+      --panel: #fff;
+      --shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 18px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      touch-action: manipulation;
+    }
+
+    .topbar {
+      width: 100%;
+      max-width: 1000px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .left { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+    h1 { margin: 0; font-size: 1.6rem; }
+    .subtle { color: var(--muted); font-weight: 650; font-size: 0.9rem; }
+
+    .header-stats {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: #444;
+      font-size: 0.95rem;
+      font-weight: 650;
+    }
+
+    .controls {
+      width: 100%;
+      max-width: 1000px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      margin: 12px 0 14px;
+    }
+
+    button, select {
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background: white;
+      cursor: pointer;
+      font-size: 1rem;
+      min-height: 44px;
+      transition: transform 0.05s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+    button:active { transform: scale(0.98); background: #f3f4f6; }
+    button.primary { background: var(--accent-color); color: white; border: none; }
+    button.primary:active { background: #2563eb; }
+    button.hint-btn { background: var(--hint-color); color: white; border: none; }
+    button.hint-btn:active { background: #d97706; }
+    button.trophy-btn { background: var(--gold-color); color: white; border: none; }
+    button.trophy-btn:active { background: #ca8a04; }
+    button.link-btn { background: white; border: 1px solid var(--border-color); }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 650;
+      color: #374151;
+    }
+    .pill.line { background: rgba(30, 64, 175, 0.08); border-color: rgba(30, 64, 175, 0.25); color: var(--line-color); }
+    .pill.x { background: rgba(156, 163, 175, 0.10); border-color: rgba(156, 163, 175, 0.35); color: #4b5563; }
+    .pill.gen { background: rgba(34, 197, 94, 0.08); border-color: rgba(34, 197, 94, 0.25); color: #166534; }
+
+    .status {
+      width: 100%;
+      max-width: 1000px;
+      min-height: 24px;
+      text-align: center;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .game-container { user-select: none; touch-action: manipulation; }
+    .game-grid {
+      background: var(--panel);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    svg { display: block; }
+    .dot { fill: var(--dot-color); }
+    .cell-number {
+      font-size: 20px;
+      font-weight: 800;
+      fill: var(--text-color);
+      text-anchor: middle;
+      dominant-baseline: central;
+      pointer-events: none;
+    }
+
+    .edge {
+      stroke: transparent;
+      stroke-width: 14;
+      stroke-linecap: round;
+      cursor: pointer;
+    }
+    .edge:hover { stroke: rgba(59, 130, 246, 0.18); }
+    .edge.line { stroke: var(--line-color); stroke-width: 4; }
+    .edge.x { stroke: var(--x-color); stroke-width: 2; }
+    .edge.error { stroke: var(--error-color); stroke-width: 5; }
+
+    .cell-bg { fill: transparent; pointer-events: none; }
+    .cell-bg.error { fill: rgba(239, 68, 68, 0.10); }
+
+    .hint-flash { animation: hintFlash 1s ease-out; }
+    @keyframes hintFlash {
+      0% { stroke: var(--hint-color); stroke-width: 7; }
+      100% { stroke: var(--line-color); stroke-width: 4; }
+    }
+
+    .instructions {
+      width: 100%;
+      max-width: 1000px;
+      background: var(--panel);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+      padding: 14px;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      margin-top: 14px;
+    }
+    .instructions h3 { margin: 0 0 8px 0; }
+    .instructions ul { margin: 8px 0; padding-left: 18px; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      padding: 14px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white;
+      width: 100%;
+      max-width: 580px;
+      max-height: 80vh;
+      overflow-y: auto;
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .achievement-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+    .achievement-item {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      opacity: 0.6;
+      filter: grayscale(1);
+    }
+    .achievement-item.unlocked {
+      opacity: 1;
+      filter: grayscale(0);
+      background: #f0fdf4;
+      border-color: rgba(34, 197, 94, 0.7);
+    }
+    .ach-icon { font-size: 1.7rem; width: 36px; text-align: center; }
+    .ach-info h4 { margin: 0; }
+    .ach-info p { margin: 4px 0 0; color: #6b7280; font-size: 0.88rem; }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 200;
+      pointer-events: none;
+    }
+    .toast {
+      pointer-events: auto;
+      background: #111827;
+      color: white;
+      padding: 12px 14px;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      max-width: 360px;
+      animation: slideIn 0.25s ease-out forwards;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(14px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .small { font-size: 0.88rem; color: var(--muted); font-weight: 650; }
+    .kv { display: inline-flex; gap: 6px; align-items: baseline; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="left">
+      <h1 id="gameTitle">Slitherlink</h1>
+      <span class="subtle" id="gameIdLabel"></span>
+    </div>
+    <div class="header-stats">
+      <span id="timer">Time: 00:00</span>
+      <span id="ach-count">🏆 0/5</span>
+      <button class="link-btn" id="backBtn" title="Back to hub">← Hub</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <select id="preset">
+      <option value="easy">Easy (5×5)</option>
+      <option value="medium" selected>Medium (7×7)</option>
+      <option value="hard">Hard (10×10)</option>
+      <option value="expert">Expert (12×12)</option>
+    </select>
+
+    <button class="primary" id="newBtn">New Game</button>
+    <span class="pill" id="modePill"><span id="modeIcon">✏️</span><span id="modeText">Line Mode</span></span>
+    <button id="modeBtn">Switch Mode</button>
+    <button id="checkBtn">Check</button>
+    <button class="hint-btn" id="hintBtn">Hint</button>
+    <button class="trophy-btn" id="trophyBtn">🏆</button>
+    <button id="solveBtn">Solve</button>
+    <span class="pill gen" id="genPill" title="Generator status"><span>⚙️</span><span id="genText">Ready</span></span>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div class="game-container">
+    <div class="game-grid">
+      <svg id="grid"></svg>
+    </div>
+  </div>
+
+  <div class="instructions">
+    <h3>Rules (Slitherlink)</h3>
+    <ul>
+      <li>Draw a <strong>single continuous loop</strong> along grid edges. No crossings, no branches.</li>
+      <li>Each number is how many of that cell’s four sides belong to the loop.</li>
+      <li>Blank cells impose no constraint.</li>
+    </ul>
+    <p class="small">
+      This rewrite uses a <strong>solution-first generator</strong>, then removes clues while preserving
+      <strong>uniqueness</strong> using an exact backtracking validator (stops after 2 solutions).
+      Difficulty is scaled by size + target clue removal + validator search effort.
+    </p>
+  </div>
+
+  <!-- Achievements Modal -->
+  <div class="modal-overlay" id="achModal" onclick="if(event.target===this) achievements.toggleModal()">
+    <div class="modal">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <h2 style="margin:0">Achievements</h2>
+        <button onclick="achievements.toggleModal()" style="border:1px solid var(--border-color); background:white; border-radius:12px;">Close</button>
+      </div>
+      <div class="achievement-list" id="achList"></div>
+      <p style="margin:12px 0 0; color:#6b7280; font-size:.9rem;">
+        Achievements are stored per gameId in your browser (localStorage).
+      </p>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    /*************************
+     * Hub integration
+     *************************/
+    const params = new URLSearchParams(location.search);
+    const GAME_ID = (params.get('gameId') || 'slitherlink').toLowerCase();
+    const RETURN_TO = params.get('return') || '../index.html';
+
+    document.getElementById('gameIdLabel').textContent = `(${GAME_ID})`;
+    document.title = `Slitherlink — ${GAME_ID}`;
+    document.getElementById('backBtn').addEventListener('click', () => location.href = RETURN_TO);
+
+    /*************************
+     * Achievement system (unchanged behavior)
+     *************************/
+    class AchievementSystem {
+      constructor(gameId) {
+        this.gameId = gameId;
+        this.storageKey = `ach_${this.gameId}`;
+        this.unlocked = this.loadUnlocked();
+        this.list = [
+          { id: 'baby_steps', icon: '👶', title: 'Baby Steps', desc: 'Solve a 5×5 puzzle' },
+          { id: 'getting_serious', icon: '🧠', title: 'Getting Serious', desc: 'Solve a 7×7 puzzle' },
+          { id: 'expert_solver', icon: '🧙‍♂️', title: 'Expert Solver', desc: 'Solve a 12×12 puzzle' },
+          { id: 'pure_logic', icon: '✨', title: 'Pure Logic', desc: 'Solve any puzzle without Hints or Check' },
+          { id: 'speed_demon', icon: '⚡', title: 'Speed Demon', desc: 'Solve a 5×5 puzzle in under 60 seconds' }
+        ];
+        this.renderList();
+        this.updateCount();
+      }
+      loadUnlocked() {
+        try {
+          const raw = localStorage.getItem(this.storageKey);
+          if (!raw) return [];
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      }
+      saveUnlocked() { localStorage.setItem(this.storageKey, JSON.stringify(this.unlocked)); }
+      check(game) {
+        const newUnlocks = [];
+        if (game.size === 5) this.tryUnlock('baby_steps', newUnlocks);
+        if (game.size === 7) this.tryUnlock('getting_serious', newUnlocks);
+        if (game.size === 12) this.tryUnlock('expert_solver', newUnlocks);
+        if (!game.usedHint && !game.usedCheck) this.tryUnlock('pure_logic', newUnlocks);
+        if (game.size === 5 && game.seconds < 60) this.tryUnlock('speed_demon', newUnlocks);
+        if (newUnlocks.length) {
+          this.saveUnlocked();
+          this.renderList();
+          this.updateCount();
+        }
+      }
+      tryUnlock(id, newUnlocks) {
+        if (!this.unlocked.includes(id)) {
+          this.unlocked.push(id);
+          newUnlocks.push(id);
+          const ach = this.list.find(a => a.id === id);
+          if (ach) this.showToast(ach);
+        }
+      }
+      showToast(ach) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `<span style="font-size:1.3rem">${ach.icon}</span><div><strong>Unlocked: ${ach.title}</strong><br><small>${ach.desc}</small></div>`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+      }
+      renderList() {
+        const listEl = document.getElementById('achList');
+        listEl.innerHTML = this.list.map(ach => {
+          const isUnlocked = this.unlocked.includes(ach.id);
+          return `
+            <div class="achievement-item ${isUnlocked ? 'unlocked' : ''}">
+              <div class="ach-icon">${ach.icon}</div>
+              <div class="ach-info">
+                <h4>${ach.title}</h4>
+                <p>${ach.desc}</p>
+              </div>
+              <div style="margin-left:auto; font-size:1.05rem;">${isUnlocked ? '✅' : '🔒'}</div>
+            </div>
+          `;
+        }).join('');
+      }
+      updateCount() {
+        document.getElementById('ach-count').textContent = `🏆 ${this.unlocked.length}/${this.list.length}`;
+      }
+      toggleModal() { document.getElementById('achModal').classList.toggle('open'); }
+    }
+
+    /*************************
+     * Slitherlink core
+     *
+     * Design plan implemented:
+     * - solution-first generation (build a single loop)
+     * - derive full clue grid from loop
+     * - clue removal with uniqueness validation (exact search, stop after 2 solutions)
+     * - difficulty scaling by size + target clue count + validator work
+     *************************/
+
+    const PRESETS = {
+      easy:   { size: 5,  targetClueDensity: 0.55, maxGenSeconds: 2.0 },
+      medium: { size: 7,  targetClueDensity: 0.45, maxGenSeconds: 3.0 },
+      hard:   { size: 10, targetClueDensity: 0.35, maxGenSeconds: 6.0 },
+      expert: { size: 12, targetClueDensity: 0.30, maxGenSeconds: 8.0 },
+    };
+
+    function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+    function randInt(n) { return Math.floor(Math.random() * n); }
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = randInt(i + 1);
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // Edge indexing for solver arrays:
+    // horizontal edges: H[r][c] where r in [0..size], c in [0..size-1]
+    // vertical edges:   V[r][c] where r in [0..size-1], c in [0..size]
+    // value: -1 unknown, 0 off, 1 on
+    function make2D(rows, cols, fill) {
+      return Array.from({ length: rows }, () => Array.from({ length: cols }, () => fill));
+    }
+
+    class SlitherlinkGame {
+      constructor() {
+        this.size = 7;             // cell grid is size x size; dots are (size+1)x(size+1)
+        this.cellSize = 50;
+        this.dotRadius = 4;
+
+        this.svg = document.getElementById('grid');
+        this.statusEl = document.getElementById('status');
+        this.timerEl = document.getElementById('timer');
+        this.genEl = document.getElementById('genText');
+
+        // puzzle state
+        this.grid = null;          // clues: number or null
+        this.solutionEdges = null; // Map key->1 for display/solve/hint
+        this.edges = new Map();    // player edges: key -> 1 line, 2 x
+
+        this.timerInterval = null;
+        this.seconds = 0;
+        this.usedHint = false;
+        this.usedCheck = false;
+        this.isPlaying = false;
+        this.drawMode = 1; // 1 line, 2 x
+
+        this.newGame();
+      }
+
+      setStatus(msg, color = "var(--text-color)") {
+        this.statusEl.textContent = msg;
+        this.statusEl.style.color = color;
+      }
+      setGenStatus(msg) { this.genEl.textContent = msg; }
+
+      startTimer() {
+        this.timerInterval = setInterval(() => {
+          this.seconds++;
+          this.updateTimerDisplay();
+        }, 1000);
+      }
+      stopTimer() {
+        if (this.timerInterval) clearInterval(this.timerInterval);
+        this.timerInterval = null;
+      }
+      updateTimerDisplay() {
+        const m = Math.floor(this.seconds / 60).toString().padStart(2, '0');
+        const s = (this.seconds % 60).toString().padStart(2, '0');
+        this.timerEl.textContent = `Time: ${m}:${s}`;
+      }
+
+      toggleMode() {
+        this.drawMode = this.drawMode === 1 ? 2 : 1;
+        this.updateModeIndicator();
+      }
+      updateModeIndicator() {
+        const pill = document.getElementById('modePill');
+        const icon = document.getElementById('modeIcon');
+        const text = document.getElementById('modeText');
+        if (this.drawMode === 1) {
+          pill.className = 'pill line';
+          icon.textContent = '✏️';
+          text.textContent = 'Line Mode';
+        } else {
+          pill.className = 'pill x';
+          icon.textContent = '❌';
+          text.textContent = 'X Mode';
+        }
+      }
+
+      edgeKey(r1, c1, r2, c2) {
+        if (r1 > r2 || (r1 === r2 && c1 > c2)) [r1, c1, r2, c2] = [r2, c2, r1, c1];
+        return `${r1},${c1},${r2},${c2}`;
+      }
+
+      newGame() {
+        const presetId = document.getElementById('preset').value;
+        const preset = PRESETS[presetId] || PRESETS.medium;
+        this.size = preset.size;
+
+        this.stopTimer();
+        this.seconds = 0;
+        this.usedHint = false;
+        this.usedCheck = false;
+        this.isPlaying = true;
+        this.drawMode = 1;
+        this.updateTimerDisplay();
+        this.updateModeIndicator();
+        this.startTimer();
+
+        this.setStatus("");
+        this.setGenStatus("Generating…");
+
+        // generate asynchronously so UI updates
+        setTimeout(() => {
+          try {
+            const t0 = performance.now();
+            const { clues, solutionMap, meta } = this.generatePuzzle(preset);
+            this.grid = clues;
+            this.solutionEdges = solutionMap;
+            this.edges.clear();
+            this.render();
+            const dt = ((performance.now() - t0) / 1000).toFixed(2);
+            this.setGenStatus(`Ready (${dt}s)`);
+            this.setStatus(`Unique puzzle generated. Difficulty: ${meta.difficultyLabel} · Clues: ${meta.cluesShown}/${meta.totalCells}`, "var(--muted)");
+          } catch (e) {
+            console.error(e);
+            this.setGenStatus("Failed");
+            this.setStatus("Generator failed — retry New Game.", "var(--error-color)");
+          }
+        }, 30);
+      }
+
+      /*************************
+       * Generator
+       *************************/
+
+      generatePuzzle(preset) {
+        const size = this.size;
+
+        // 1) Generate a single loop (solution)
+        const loop = this.generateSingleLoop(size);
+
+        // 2) Derive full clues from solution
+        const fullClues = this.computeAllCluesFromLoop(size, loop);
+
+        // 3) Remove clues while preserving uniqueness + target density
+        const totalCells = size * size;
+        const targetClues = Math.floor(totalCells * preset.targetClueDensity);
+
+        // Start with all clues
+        let clues = fullClues.map(row => row.slice());
+
+        // Candidate removal order: shuffle cells, but bias away from extremes (0/4) first
+        const cells = [];
+        for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) {
+          cells.push({ r, c, v: fullClues[r][c] });
+        }
+        shuffle(cells);
+        cells.sort((a, b) => {
+          const pa = (a.v === 1 || a.v === 2) ? 0 : (a.v === 3) ? 1 : 2;
+          const pb = (b.v === 1 || b.v === 2) ? 0 : (b.v === 3) ? 1 : 2;
+          return pa - pb;
+        });
+
+        // removal with uniqueness validation
+        const maxMs = preset.maxGenSeconds * 1000;
+        const started = performance.now();
+
+        let shown = totalCells;
+        let lastWork = 0;
+
+        for (const cell of cells) {
+          if (shown <= targetClues) break;
+          if (performance.now() - started > maxMs) break;
+
+          const { r, c } = cell;
+          const old = clues[r][c];
+          if (old === null) continue;
+
+          clues[r][c] = null;
+
+          const val = this.validateUniqueness(size, clues, 2, /*workLimit*/ this.workLimitForPreset(preset));
+          lastWork = val.work;
+          if (!val.unique) {
+            clues[r][c] = old; // restore
+          } else {
+            shown--;
+          }
+        }
+
+        // Quick post-pass: try remove a few more random to approach target if time remains
+        const remainingCells = [];
+        for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) if (clues[r][c] !== null) remainingCells.push({ r, c });
+        shuffle(remainingCells);
+        for (const cell of remainingCells) {
+          if (shown <= targetClues) break;
+          if (performance.now() - started > maxMs) break;
+          const old = clues[cell.r][cell.c];
+          clues[cell.r][cell.c] = null;
+          const val = this.validateUniqueness(size, clues, 2, this.workLimitForPreset(preset));
+          lastWork = val.work;
+          if (!val.unique) clues[cell.r][cell.c] = old;
+          else shown--;
+        }
+
+        // classify difficulty roughly by validator work + clue density
+        const density = shown / totalCells;
+        const workScore = lastWork;
+        const difficultyLabel = this.labelDifficulty(preset, density, workScore);
+
+        return {
+          clues,
+          solutionMap: loop,
+          meta: { cluesShown: shown, totalCells, density, workScore, difficultyLabel }
+        };
+      }
+
+      workLimitForPreset(preset) {
+        // This is a "node expansion" budget for uniqueness checking.
+        // Larger puzzles need larger budgets.
+        const n = preset.size;
+        if (n <= 5) return 60_000;
+        if (n <= 7) return 150_000;
+        if (n <= 10) return 400_000;
+        return 700_000;
+      }
+
+      labelDifficulty(preset, density, work) {
+        // Not a perfect human-difficulty estimator, but consistent scaling.
+        // Lower density + higher validator work => harder.
+        const size = preset.size;
+        const base = (size <= 5) ? 0 : (size <= 7) ? 1 : (size <= 10) ? 2 : 3;
+        const dAdj = (density < 0.33) ? 2 : (density < 0.40) ? 1 : 0;
+        const wAdj = (work > 350_000) ? 2 : (work > 160_000) ? 1 : 0;
+        const score = clamp(base + dAdj + wAdj, 0, 6);
+        return ["Easy", "Easy+", "Medium", "Medium+", "Hard", "Hard+", "Expert"][score] || "Medium";
+      }
+
+      generateSingleLoop(size) {
+        // Backtracking self-avoiding cycle on dot grid (size+1 by size+1)
+        // Ensures: simple cycle, degree-2 at visited vertices.
+        const tries = 200;
+        for (let t = 0; t < tries; t++) {
+          const loop = this.tryBuildCycle(size);
+          if (loop) return loop;
+        }
+        // Fallback: perimeter rectangle
+        return this.perimeterLoop(size);
+      }
+
+      perimeterLoop(size) {
+        const m = new Map();
+        const top = 0, left = 0, bottom = size, right = size;
+        for (let c = left; c < right; c++) m.set(this.edgeKey(top, c, top, c+1), 1);
+        for (let r = top; r < bottom; r++) m.set(this.edgeKey(r, right, r+1, right), 1);
+        for (let c = right; c > left; c--) m.set(this.edgeKey(bottom, c, bottom, c-1), 1);
+        for (let r = bottom; r > top; r--) m.set(this.edgeKey(r, left, r-1, left), 1);
+        return m;
+      }
+
+      tryBuildCycle(size) {
+        const R = size + 1, C = size + 1;
+
+        const start = { r: randInt(R), c: randInt(C) };
+        const path = [start];
+        const inPath = new Map(); // "r,c" -> index
+        inPath.set(`${start.r},${start.c}`, 0);
+
+        const deg = make2D(R, C, 0);
+        const edges = new Map();
+
+        const maxLen = size * size * 2 + size * 2; // heuristic bound
+        const minLen = Math.max(8, size * 2);      // avoid tiny cycles
+
+        const neighborsOf = (r, c) => {
+          const n = [];
+          if (r > 0) n.push({ r: r-1, c });
+          if (r < size) n.push({ r: r+1, c });
+          if (c > 0) n.push({ r, c: c-1 });
+          if (c < size) n.push({ r, c: c+1 });
+          return n;
+        };
+
+        const canAddEdge = (a, b) => {
+          // degree constraint: no vertex exceeds degree 2
+          if (deg[a.r][a.c] >= 2) return false;
+          if (deg[b.r][b.c] >= 2) return false;
+          return true;
+        };
+
+        let current = start;
+        for (let step = 0; step < maxLen; step++) {
+          let nbrs = neighborsOf(current.r, current.c);
+          shuffle(nbrs);
+
+          // Heuristic: prefer moves that go to vertices with lower degree and not in path
+          nbrs.sort((u, v) => (deg[u.r][u.c] - deg[v.r][v.c]));
+
+          let moved = false;
+          for (const nxt of nbrs) {
+            const keyV = `${nxt.r},${nxt.c}`;
+
+            // if closing to start
+            if (nxt.r === start.r && nxt.c === start.c) {
+              if (path.length >= minLen && canAddEdge(current, start)) {
+                // add closing edge
+                edges.set(this.edgeKey(current.r, current.c, start.r, start.c), 1);
+                deg[current.r][current.c]++; deg[start.r][start.c]++;
+
+                // Validate: all vertices used have degree 2, and it is a single connected cycle.
+                if (this.validateLoopDegrees(edges, size)) return edges;
+
+                // undo and continue
+                edges.delete(this.edgeKey(current.r, current.c, start.r, start.c));
+                deg[current.r][current.c]--; deg[start.r][start.c]--;
+              }
+              continue;
+            }
+
+            // Avoid revisiting vertices (prevents self-intersections and smaller cycles)
+            if (inPath.has(keyV)) continue;
+            if (!canAddEdge(current, nxt)) continue;
+
+            // Add edge
+            edges.set(this.edgeKey(current.r, current.c, nxt.r, nxt.c), 1);
+            deg[current.r][current.c]++; deg[nxt.r][nxt.c]++;
+
+            // If this would create a forced dead-end (vertex degree 2 too early), accept but it limits future moves.
+            // We'll rely on maxLen and heuristics.
+
+            path.push({ r: nxt.r, c: nxt.c });
+            inPath.set(keyV, path.length - 1);
+            current = nxt;
+            moved = true;
+            break;
+          }
+
+          if (!moved) {
+            // dead end: restart attempt
+            return null;
+          }
+        }
+        return null;
+      }
+
+      validateLoopDegrees(loopEdges, size) {
+        // Check all used vertices have degree 2 and graph is single cycle
+        const graph = new Map();
+        for (const [key] of loopEdges) {
+          const [r1,c1,r2,c2] = key.split(',').map(Number);
+          const v1 = `${r1},${c1}`, v2 = `${r2},${c2}`;
+          if (!graph.has(v1)) graph.set(v1, []);
+          if (!graph.has(v2)) graph.set(v2, []);
+          graph.get(v1).push(v2);
+          graph.get(v2).push(v1);
+        }
+        if (graph.size === 0) return false;
+        for (const [v, nbrs] of graph) {
+          if (nbrs.length !== 2) return false;
+        }
+        // connectivity
+        const start = graph.keys().next().value;
+        const q = [start];
+        const seen = new Set([start]);
+        while (q.length) {
+          const cur = q.shift();
+          for (const nb of (graph.get(cur) || [])) {
+            if (!seen.has(nb)) { seen.add(nb); q.push(nb); }
+          }
+        }
+        return seen.size === graph.size;
+      }
+
+      computeAllCluesFromLoop(size, loopMap) {
+        const clues = Array.from({ length: size }, () => Array.from({ length: size }, () => 0));
+        for (let r = 0; r < size; r++) {
+          for (let c = 0; c < size; c++) {
+            let count = 0;
+            if (loopMap.has(this.edgeKey(r, c, r, c+1))) count++;
+            if (loopMap.has(this.edgeKey(r, c+1, r+1, c+1))) count++;
+            if (loopMap.has(this.edgeKey(r+1, c, r+1, c+1))) count++;
+            if (loopMap.has(this.edgeKey(r, c, r+1, c))) count++;
+            clues[r][c] = count;
+          }
+        }
+        return clues;
+      }
+
+      /*************************
+       * Uniqueness validation (exact search, stop after `limitSolutions`)
+       *
+       * Model:
+       * - Variables are all edges (horizontal + vertical), value in {0,1}
+       * Constraints:
+       * - For each numbered cell: sum of 4 surrounding edges == clue
+       * - For each vertex: degree is 0 or 2 (in final solution)
+       * - Single loop enforced at the end (connectivity + no multiple cycles)
+       *
+       * Notes:
+       * - This is heavier than a human-logic solver, but guarantees uniqueness for small/medium sizes.
+       *************************/
+
+      validateUniqueness(size, clues, limitSolutions = 2, workLimit = 200000) {
+        const H = size, W = size;
+        const R = size + 1, C = size + 1;
+
+        // unknown arrays
+        const h = make2D(R, W, -1);
+        const v = make2D(H, C, -1);
+
+        // list all edge variables
+        const vars = [];
+        for (let r = 0; r < R; r++) for (let c = 0; c < W; c++) vars.push({ t: 'h', r, c });
+        for (let r = 0; r < H; r++) for (let c = 0; c < C; c++) vars.push({ t: 'v', r, c });
+
+        // Precompute incidence for cells and vertices for faster propagation
+        const cellEdges = (r, c) => ([
+          { t:'h', r:r,   c:c   }, // top
+          { t:'v', r:r,   c:c+1 }, // right
+          { t:'h', r:r+1, c:c   }, // bottom
+          { t:'v', r:r,   c:c   }, // left
+        ]);
+        const vertexEdges = (vr, vc) => {
+          const out = [];
+          // left/right horizontal
+          if (vc > 0) out.push({ t:'h', r:vr, c:vc-1 });
+          if (vc < size) out.push({ t:'h', r:vr, c:vc });
+          // up/down vertical
+          if (vr > 0) out.push({ t:'v', r:vr-1, c:vc });
+          if (vr < size) out.push({ t:'v', r:vr, c:vc });
+          return out;
+        };
+
+        const getVar = (e) => (e.t === 'h' ? h[e.r][e.c] : v[e.r][e.c]);
+        const setVar = (e, val) => { if (e.t === 'h') h[e.r][e.c] = val; else v[e.r][e.c] = val; };
+
+        let work = 0;
+        let solutions = 0;
+
+        const snapshot = () => ({ h: h.map(r => r.slice()), v: v.map(r => r.slice()) });
+        const restore = (snap) => { for (let r = 0; r < R; r++) h[r] = snap.h[r].slice(); for (let r = 0; r < H; r++) v[r] = snap.v[r].slice(); };
+
+        const propagate = () => {
+          // Constraint propagation loop:
+          // - for each clue cell: min/max sum bounds; force edges if needed
+          // - for each vertex: degree must be 0 or 2; enforce bounds (<=2) and parity (can't be 1 or 3)
+          let changed = true;
+          while (changed) {
+            if (++work > workLimit) return { ok: false, reason: 'work' };
+            changed = false;
+
+            // cells with clues
+            for (let r = 0; r < H; r++) {
+              for (let c = 0; c < W; c++) {
+                const clue = clues[r][c];
+                if (clue === null || clue === undefined) continue;
+                const edges = cellEdges(r,c);
+                let sum = 0, unk = 0;
+                for (const e of edges) {
+                  const val = getVar(e);
+                  if (val === -1) unk++;
+                  else sum += val;
+                }
+                // bounds
+                if (sum > clue) return { ok:false, reason:'cell' };
+                if (sum + unk < clue) return { ok:false, reason:'cell' };
+
+                // force if tight
+                if (unk > 0) {
+                  if (sum === clue) {
+                    for (const e of edges) if (getVar(e) === -1) { setVar(e, 0); changed = true; }
+                  } else if (sum + unk === clue) {
+                    for (const e of edges) if (getVar(e) === -1) { setVar(e, 1); changed = true; }
+                  }
+                }
+              }
+            }
+
+            // vertices degree constraints
+            for (let vr = 0; vr < R; vr++) {
+              for (let vc = 0; vc < C; vc++) {
+                const inc = vertexEdges(vr, vc);
+                let sum = 0, unk = 0;
+                for (const e of inc) {
+                  const val = getVar(e);
+                  if (val === -1) unk++;
+                  else sum += val;
+                }
+                // degree can't exceed 2
+                if (sum > 2) return { ok:false, reason:'deg' };
+                if (sum + unk < 0) return { ok:false, reason:'deg' };
+
+                // final allowed degrees are 0 or 2; during propagation enforce:
+                // - if sum==2 => remaining must be 0
+                // - if sum==1 and unk==0 => impossible
+                // - if sum==1 and unk==1 => last must be 1 (to reach 2)
+                // - if sum==0 and unk==0 => ok
+                // - if sum==0 and unk==1 => cannot force
+                if (unk === 0) {
+                  if (sum === 1) return { ok:false, reason:'deg' };
+                } else {
+                  if (sum === 2) {
+                    for (const e of inc) if (getVar(e) === -1) { setVar(e, 0); changed = true; }
+                  } else if (sum === 1 && unk === 1) {
+                    for (const e of inc) if (getVar(e) === -1) { setVar(e, 1); changed = true; }
+                  }
+                }
+              }
+            }
+          }
+          return { ok: true };
+        };
+
+        const isComplete = () => {
+          for (let r = 0; r < R; r++) for (let c = 0; c < W; c++) if (h[r][c] === -1) return false;
+          for (let r = 0; r < H; r++) for (let c = 0; c < C; c++) if (v[r][c] === -1) return false;
+          return true;
+        };
+
+        const buildEdgeMapFromHV = () => {
+          const m = new Map();
+          for (let r = 0; r < R; r++) for (let c = 0; c < W; c++) if (h[r][c] === 1) m.set(this.edgeKey(r,c,r,c+1), 1);
+          for (let r = 0; r < H; r++) for (let c = 0; c < C; c++) if (v[r][c] === 1) m.set(this.edgeKey(r,c,r+1,c), 1);
+          return m;
+        };
+
+        const isSingleLoop = () => {
+          const edgeMap = buildEdgeMapFromHV();
+          return this.validateLoopDegrees(edgeMap, size);
+        };
+
+        const pickVar = () => {
+          // heuristic: pick edge that touches a clued cell (more constrained) or near existing forced degrees
+          // Here: just first unknown (but in shuffled order) with bias.
+          let best = null, bestScore = -1;
+          for (const e of vars) {
+            if (getVar(e) !== -1) continue;
+            let score = 0;
+            // adjacent cells for edge
+            if (e.t === 'h') {
+              const r = e.r, c = e.c;
+              if (r > 0 && r-1 < size && clues[r-1][c] !== null) score += 2;
+              if (r < size && clues[r][c] !== null) score += 2;
+            } else {
+              const r = e.r, c = e.c;
+              if (c > 0 && c-1 < size && clues[r][c-1] !== null) score += 2;
+              if (c < size && clues[r][c] !== null) score += 2;
+            }
+            // vertex degree pressure
+            const endpoints = (e.t === 'h')
+              ? [{ vr: e.r, vc: e.c }, { vr: e.r, vc: e.c+1 }]
+              : [{ vr: e.r, vc: e.c }, { vr: e.r+1, vc: e.c }];
+            for (const p of endpoints) {
+              const inc = vertexEdges(p.vr, p.vc);
+              let sum = 0, unk = 0;
+              for (const ie of inc) {
+                const val = getVar(ie);
+                if (val === -1) unk++; else sum += val;
+              }
+              if (sum === 1 && unk === 1) score += 3;
+              if (sum === 2) score += 1;
+            }
+            if (score > bestScore) { bestScore = score; best = e; }
+          }
+          return best;
+        };
+
+        const dfs = () => {
+          const p = propagate();
+          if (!p.ok) return;
+          if (isComplete()) {
+            // must satisfy single loop (not just disjoint cycles)
+            if (isSingleLoop()) {
+              solutions++;
+            }
+            return;
+          }
+          if (solutions >= limitSolutions) return;
+          if (work > workLimit) return;
+
+          const e = pickVar();
+          if (!e) return;
+          const snap = snapshot();
+
+          // branch: try ON then OFF (often prunes quickly with degrees)
+          setVar(e, 1);
+          dfs();
+          if (solutions >= limitSolutions || work > workLimit) return;
+
+          restore(snap);
+          setVar(e, 0);
+          dfs();
+          restore(snap);
+        };
+
+        dfs();
+
+        // If we hit work limit without finding 2 solutions, treat as "unknown" => not safe to remove
+        const unique = (solutions === 1);
+        const exceeded = work > workLimit;
+        return { unique: unique && !exceeded, solutions, work, exceeded };
+      }
+
+      /*************************
+       * Rendering & input
+       *************************/
+
+      render() {
+        const size = this.size;
+        const width = this.cellSize * size + 40;
+        const height = this.cellSize * size + 40;
+        const offset = 20;
+
+        this.svg.setAttribute('width', width);
+        this.svg.setAttribute('height', height);
+        this.svg.innerHTML = '';
+
+        // cell backgrounds for error highlight
+        for (let r = 0; r < size; r++) {
+          for (let c = 0; c < size; c++) {
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('class', 'cell-bg');
+            rect.setAttribute('x', offset + c * this.cellSize);
+            rect.setAttribute('y', offset + r * this.cellSize);
+            rect.setAttribute('width', this.cellSize);
+            rect.setAttribute('height', this.cellSize);
+            rect.dataset.r = r;
+            rect.dataset.c = c;
+            this.svg.appendChild(rect);
+          }
+        }
+
+        // edges clickable areas
+        for (let r = 0; r <= size; r++) {
+          for (let c = 0; c <= size; c++) {
+            if (c < size) this.drawEdge(r, c, r, c + 1, offset);
+            if (r < size) this.drawEdge(r, c, r + 1, c, offset);
+          }
+        }
+
+        // dots
+        for (let r = 0; r <= size; r++) {
+          for (let c = 0; c <= size; c++) {
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('class', 'dot');
+            circle.setAttribute('cx', offset + c * this.cellSize);
+            circle.setAttribute('cy', offset + r * this.cellSize);
+            circle.setAttribute('r', this.dotRadius);
+            this.svg.appendChild(circle);
+          }
+        }
+
+        // numbers
+        for (let r = 0; r < size; r++) {
+          for (let c = 0; c < size; c++) {
+            if (this.grid[r][c] !== null) {
+              const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+              text.setAttribute('class', 'cell-number');
+              text.setAttribute('x', offset + c * this.cellSize + this.cellSize / 2);
+              text.setAttribute('y', offset + r * this.cellSize + this.cellSize / 2);
+              text.textContent = this.grid[r][c];
+              this.svg.appendChild(text);
+            }
+          }
+        }
+      }
+
+      drawEdge(r1, c1, r2, c2, offset) {
+        const key = this.edgeKey(r1, c1, r2, c2);
+        const state = this.edges.get(key) || 0;
+
+        const x1 = offset + c1 * this.cellSize;
+        const y1 = offset + r1 * this.cellSize;
+        const x2 = offset + c2 * this.cellSize;
+        const y2 = offset + r2 * this.cellSize;
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('class', `edge ${state === 1 ? 'line' : state === 2 ? 'x' : ''}`);
+        line.setAttribute('x1', x1);
+        line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2);
+        line.setAttribute('y2', y2);
+        line.dataset.key = key;
+
+        line.addEventListener('click', () => {
+          if (!this.isPlaying) return;
+          this.handleEdgeClick(key);
+        });
+
+        this.svg.appendChild(line);
+      }
+
+      handleEdgeClick(key) {
+        const current = this.edges.get(key) || 0;
+        if (this.drawMode === 1) {
+          // line mode: none->line, line->none, x->line
+          if (current === 0) this.edges.set(key, 1);
+          else if (current === 1) this.edges.delete(key);
+          else this.edges.set(key, 1);
+        } else {
+          // X mode: none->x, x->none, line->x
+          if (current === 0) this.edges.set(key, 2);
+          else if (current === 2) this.edges.delete(key);
+          else this.edges.set(key, 2);
+        }
+        this.render();
+        this.setStatus("");
+      }
+
+      /*************************
+       * Player checks / hints
+       *************************/
+
+      countPlayerCellEdges(r, c) {
+        let count = 0;
+        if (this.edges.get(this.edgeKey(r, c, r, c + 1)) === 1) count++;
+        if (this.edges.get(this.edgeKey(r, c + 1, r + 1, c + 1)) === 1) count++;
+        if (this.edges.get(this.edgeKey(r + 1, c, r + 1, c + 1)) === 1) count++;
+        if (this.edges.get(this.edgeKey(r, c, r + 1, c)) === 1) count++;
+        return count;
+      }
+
+      checkSingleLoopPlayer() {
+        const graph = new Map();
+        for (const [key, val] of this.edges) {
+          if (val !== 1) continue;
+          const [r1,c1,r2,c2] = key.split(',').map(Number);
+          const v1 = `${r1},${c1}`, v2 = `${r2},${c2}`;
+          if (!graph.has(v1)) graph.set(v1, []);
+          if (!graph.has(v2)) graph.set(v2, []);
+          graph.get(v1).push(v2);
+          graph.get(v2).push(v1);
+        }
+        if (graph.size === 0) return { valid:false, message:"No loop drawn yet." };
+        for (const [v, nbrs] of graph) {
+          if (nbrs.length !== 2) return { valid:false, message:"Loop has branches or loose ends." };
+        }
+        const start = graph.keys().next().value;
+        const q = [start];
+        const seen = new Set([start]);
+        while (q.length) {
+          const cur = q.shift();
+          for (const nb of graph.get(cur)) {
+            if (!seen.has(nb)) { seen.add(nb); q.push(nb); }
+          }
+        }
+        if (seen.size !== graph.size) return { valid:false, message:"Loop is not connected (multiple loops/components)." };
+        return { valid:true };
+      }
+
+      checkSolution() {
+        if (!this.isPlaying) return;
+        this.usedCheck = true;
+
+        // clear highlights
+        document.querySelectorAll('.cell-bg, .edge').forEach(el => el.classList.remove('error'));
+
+        let ok = true;
+        let msg = "";
+
+        for (let r = 0; r < this.size; r++) {
+          for (let c = 0; c < this.size; c++) {
+            if (this.grid[r][c] !== null) {
+              const need = this.grid[r][c];
+              const got = this.countPlayerCellEdges(r, c);
+              if (got !== need) {
+                ok = false;
+                msg = msg || `Cell constraint violated: got ${got} but needs ${need}.`;
+                const cellBg = document.querySelector(`.cell-bg[data-r="${r}"][data-c="${c}"]`);
+                if (cellBg) cellBg.classList.add('error');
+              }
+            }
+          }
+        }
+
+        const loopCheck = this.checkSingleLoopPlayer();
+        if (!loopCheck.valid) { ok = false; msg = msg || loopCheck.message; }
+
+        if (ok) {
+          this.stopTimer();
+          this.isPlaying = false;
+          this.setStatus("Puzzle Solved! Great job!", "var(--success-color)");
+          achievements.check(this);
+        } else {
+          this.setStatus(msg, "var(--error-color)");
+        }
+      }
+
+      getHint() {
+        if (!this.isPlaying) return;
+        this.usedHint = true;
+
+        // Hint policy aligned with "solution-first": reveal a missing correct edge.
+        for (const [key] of this.solutionEdges) {
+          if (this.edges.get(key) !== 1) {
+            this.edges.set(key, 1);
+            this.render();
+            const edge = document.querySelector(`line[data-key="${key}"]`);
+            if (edge) {
+              edge.classList.add('hint-flash');
+              setTimeout(() => edge.classList.remove('hint-flash'), 1000);
+            }
+            this.setStatus("Hint: This edge is part of the loop.", "var(--hint-color)");
+            return;
+          }
+        }
+        this.setStatus("No hints available.", "var(--hint-color)");
+      }
+
+      giveUp() {
+        this.stopTimer();
+        this.isPlaying = false;
+        this.edges.clear();
+        for (const [key, val] of this.solutionEdges) this.edges.set(key, val);
+        this.render();
+        this.setStatus("Solution revealed.", "var(--accent-color)");
+      }
+    }
+
+    const achievements = new AchievementSystem(GAME_ID);
+    const game = new SlitherlinkGame();
+
+    // UI wire-up
+    document.getElementById('newBtn').addEventListener('click', () => game.newGame());
+    document.getElementById('modeBtn').addEventListener('click', () => game.toggleMode());
+    document.getElementById('checkBtn').addEventListener('click', () => game.checkSolution());
+    document.getElementById('hintBtn').addEventListener('click', () => game.getHint());
+    document.getElementById('solveBtn').addEventListener('click', () => game.giveUp());
+    document.getElementById('trophyBtn').addEventListener('click', () => achievements.toggleModal());
+    document.getElementById('preset').addEventListener('change', () => game.newGame());
+  </script>
+</body>
+</html>
