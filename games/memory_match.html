@@ -1,0 +1,641 @@
+
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>Memory Match</title>
+    <style>
+        :root{
+            --bg: #ffffff;
+            --panel: #ffffff;
+            --text: #0f172a;
+            --muted: #64748b;
+            --border: #e2e8f0;
+
+            --accent: #2563eb;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --gold: #eab308;
+
+            --card-back-1: #e0f2fe;
+            --card-back-2: #dbeafe;
+            --card-face-1: #fde68a;
+            --card-face-2: #fca5a5;
+        }
+
+        *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body{
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            min-height:100vh;
+            margin:0;
+            padding:18px;
+            touch-action: manipulation;
+        }
+
+        .shell{
+            width:100%;
+            max-width: 760px;
+            background: var(--panel);
+        }
+
+        .topbar{
+            width:100%;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:12px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            padding: 14px 14px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: white;
+        }
+
+        .topbar h1{
+            margin:0;
+            font-size:1.5rem;
+            letter-spacing: 0.2px;
+        }
+
+        .header-stats{
+            display:flex;
+            gap:14px;
+            align-items:center;
+            flex-wrap: wrap;
+            font-weight: 700;
+            color: var(--muted);
+        }
+
+        .stat strong{ color: var(--text); font-weight: 800; }
+
+        button, select{
+            padding:10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 700;
+            transition: transform 0.08s, box-shadow 0.2s, border-color 0.2s;
+            touch-action: manipulation;
+            min-height: 44px;
+            color: var(--text);
+        }
+
+        button:active{ transform: scale(0.98); }
+        button:hover{ box-shadow: 0 6px 18px rgba(2,6,23,0.08); }
+
+        button.primary{
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        button.trophy-btn{
+            background: var(--gold);
+            border-color: var(--gold);
+            color: white;
+        }
+
+        .controls{
+            width:100%;
+            display:flex;
+            gap:10px;
+            margin: 14px 0 18px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .controls .spacer{ flex: 1; }
+
+        .status{
+            width:100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #f8fafc;
+            color: var(--text);
+            font-size: 1.05rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .game-board{
+            width:100%;
+            display:grid;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .card{
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, var(--card-back-1) 0%, var(--card-back-2) 100%);
+            border-radius: 14px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size: 2.2rem;
+            cursor:pointer;
+            user-select:none;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 18px rgba(2,6,23,0.08);
+            transition: transform 0.12s, box-shadow 0.2s, background 0.2s, opacity 0.2s;
+        }
+        .card:active{ transform: scale(0.98); }
+
+        .card.flipped{
+            background: linear-gradient(135deg, var(--card-face-1) 0%, var(--card-face-2) 100%);
+        }
+
+        .card.matched{
+            background: #dcfce7;
+            border-color: #86efac;
+            opacity: 0.65;
+            pointer-events:none;
+        }
+
+        .footer-hint{
+            width:100%;
+            color: var(--muted);
+            font-size: 0.92rem;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+
+        /* Achievement Modal */
+        .modal-overlay{
+            position: fixed;
+            inset: 0;
+            background: rgba(2,6,23,0.45);
+            display:none;
+            justify-content:center;
+            align-items:center;
+            z-index:100;
+            padding:14px;
+        }
+        .modal-overlay.open{ display:flex; }
+
+        .modal{
+            background:white;
+            padding:18px;
+            border-radius: 14px;
+            width:100%;
+            max-width: 560px;
+            max-height: 80vh;
+            overflow-y:auto;
+            border: 1px solid var(--border);
+            box-shadow: 0 18px 45px rgba(2,6,23,0.25);
+        }
+
+        .achievement-list{
+            display:flex;
+            flex-direction:column;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .achievement-item{
+            display:flex;
+            align-items:center;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            opacity: 0.6;
+            filter: grayscale(1);
+            background: white;
+        }
+
+        .achievement-item.unlocked{
+            opacity: 1;
+            filter: grayscale(0);
+            background: #f0fdf4;
+            border-color: var(--success);
+        }
+
+        .ach-icon{ font-size: 1.8rem; margin-right: 12px; }
+        .ach-info h4{ margin: 0 0 4px 0; }
+        .ach-info p{ margin:0; font-size: 0.9rem; color: var(--muted); }
+
+        /* Toast */
+        .toast-container{
+            position: fixed;
+            bottom: 18px;
+            right: 18px;
+            display:flex;
+            flex-direction:column;
+            gap: 10px;
+            z-index: 200;
+            pointer-events:none;
+        }
+
+        .toast{
+            background: #0f172a;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            box-shadow: 0 14px 30px rgba(2,6,23,0.22);
+            display:flex;
+            align-items:center;
+            gap: 10px;
+            animation: slideIn 0.25s ease-out forwards;
+            max-width: 360px;
+            pointer-events:auto;
+        }
+
+        @keyframes slideIn{
+            from{ transform: translateX(16px); opacity: 0; }
+            to{ transform: translateX(0); opacity: 1; }
+        }
+
+        @media (max-width: 520px){
+            .card{ font-size: 1.95rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <div class="topbar">
+            <h1 id="gameTitle">Memory Match</h1>
+            <div class="header-stats">
+                <span class="stat" id="timer">⏱️ <strong>0:00</strong></span>
+                <span class="stat" id="moves">🔄 <strong>0</strong></span>
+                <span class="stat" id="misses">❌ <strong>0</strong>/<span id="missLimit">0</span></span>
+                <span class="stat" id="ach-count">🏆 <strong>0</strong>/4</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="backBtn">← Hub</button>
+
+            <label style="display:flex; align-items:center; gap:8px; color: var(--muted); font-weight: 800;">
+                Difficulty
+                <select id="difficultySelect" aria-label="Difficulty">
+                    <option value="easy">Easy (4×4)</option>
+                    <option value="medium">Medium (5×4)</option>
+                    <option value="hard">Hard (6×6)</option>
+                </select>
+            </label>
+
+            <div class="spacer"></div>
+
+            <button class="primary" id="newGameBtn">New Game</button>
+            <button class="trophy-btn" id="trophyBtn" aria-label="Achievements">🏆</button>
+        </div>
+
+        <div class="status" id="status">Match the pairs!</div>
+        <div class="footer-hint" id="hint"></div>
+        <div id="board" class="game-board"></div>
+    </div>
+
+    <!-- Achievements Modal -->
+    <div class="modal-overlay" id="achModal" onclick="if(event.target===this) achievements.toggleModal()">
+        <div class="modal">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                <h2 style="margin:0">Achievements</h2>
+                <button onclick="achievements.toggleModal()">Close</button>
+            </div>
+            <div class="achievement-list" id="achList"></div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // Hub integration
+        const params = new URLSearchParams(location.search);
+        const GAME_ID = params.get('gameId') || 'memory_match';
+        const RETURN_TO = params.get('return') || '../index.html';
+
+        document.getElementById('backBtn').addEventListener('click', () => {
+            location.href = RETURN_TO;
+        });
+
+        class AchievementSystem {
+            constructor(gameId) {
+                this.gameId = gameId;
+                this.storageKey = `ach_${this.gameId}`;
+                this.unlocked = this.loadUnlocked();
+
+                this.list = [
+                    { id: 'first_win', icon: '🎉', title: 'First Victory', desc: 'Complete your first game' },
+                    { id: 'speed_demon', icon: '⚡', title: 'Speed Demon', desc: 'Win in under 30 seconds' },
+                    { id: 'perfect_memory', icon: '🧠', title: 'Perfect Memory', desc: 'Win with 0 misses' },
+                    { id: 'persistent', icon: '💪', title: 'Persistent', desc: 'Complete 10 games' }
+                ];
+
+                this.renderList();
+                this.updateCount();
+            }
+
+            loadUnlocked(){
+                try{
+                    const raw = localStorage.getItem(this.storageKey);
+                    return raw ? JSON.parse(raw) : [];
+                }catch{
+                    return [];
+                }
+            }
+
+            saveUnlocked(){
+                localStorage.setItem(this.storageKey, JSON.stringify(this.unlocked));
+            }
+
+            check(gameStats) {
+                const newUnlocks = [];
+
+                this.tryUnlock('first_win', newUnlocks);
+                if (gameStats.seconds < 30) this.tryUnlock('speed_demon', newUnlocks);
+                if (gameStats.misses === 0) this.tryUnlock('perfect_memory', newUnlocks);
+
+                const gamesPlayed = parseInt(localStorage.getItem(`${this.gameId}_played`) || '0') + 1;
+                localStorage.setItem(`${this.gameId}_played`, gamesPlayed);
+                if (gamesPlayed >= 10) this.tryUnlock('persistent', newUnlocks);
+
+                if (newUnlocks.length > 0) {
+                    this.saveUnlocked();
+                    this.renderList();
+                    this.updateCount();
+                }
+            }
+
+            tryUnlock(id, newUnlocks) {
+                if (!this.unlocked.includes(id)) {
+                    this.unlocked.push(id);
+                    newUnlocks.push(id);
+                    const ach = this.list.find(a => a.id === id);
+                    if (ach) this.showToast(ach);
+                }
+            }
+
+            showToast(ach) {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.innerHTML = `<span style="font-size:1.25rem">${ach.icon}</span>
+                                   <div><strong>Unlocked: ${ach.title}</strong><br><small>${ach.desc}</small></div>`;
+                container.appendChild(toast);
+                setTimeout(() => toast.remove(), 4000);
+            }
+
+            renderList() {
+                const listEl = document.getElementById('achList');
+                listEl.innerHTML = this.list.map(ach => {
+                    const isUnlocked = this.unlocked.includes(ach.id);
+                    return `
+                        <div class="achievement-item ${isUnlocked ? 'unlocked' : ''}">
+                            <div class="ach-icon">${ach.icon}</div>
+                            <div class="ach-info">
+                                <h4>${ach.title}</h4>
+                                <p>${ach.desc}</p>
+                            </div>
+                            <div style="margin-left:auto; font-size:1.1rem;">${isUnlocked ? '✅' : '🔒'}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            updateCount() {
+                document.getElementById('ach-count').innerHTML = `🏆 <strong>${this.unlocked.length}</strong>/${this.list.length}`;
+            }
+
+            toggleModal() {
+                document.getElementById('achModal').classList.toggle('open');
+            }
+        }
+
+        class MemoryGame {
+            constructor() {
+                this.board = document.getElementById('board');
+                this.statusEl = document.getElementById('status');
+                this.timerEl = document.getElementById('timer');
+                this.movesEl = document.getElementById('moves');
+                this.missesEl = document.getElementById('misses');
+                this.missLimitEl = document.getElementById('missLimit');
+                this.hintEl = document.getElementById('hint');
+
+                // Bigger emoji pool (enough for 6x6 = 18 pairs)
+                this.emojiPool = [
+                    '🍎','🍌','🍇','🍊','🍓','🍑','🍉','🥝','🍍','🥥','🍒','🍋',
+                    '🥕','🌽','🍅','🥑','🍄','🫐','🍭','🍪','🍩','🍰','🍫','🍿',
+                    '⚽','🏀','🏈','🎾','🎸','🎮','🎲','🎯','🚀','✈️','🚗','🚲'
+                ];
+
+                this.difficulties = {
+                    easy:   { cols: 4, rows: 4, label: 'Easy (4×4)' },
+                    medium: { cols: 5, rows: 4, label: 'Medium (5×4)' },
+                    hard:   { cols: 6, rows: 6, label: 'Hard (6×6)' }
+                };
+
+                this.cards = [];
+                this.flippedCards = [];
+                this.matchedPairs = 0;
+
+                this.moves = 0;
+                this.misses = 0;
+                this.missLimit = 0;
+
+                this.seconds = 0;
+                this.timerInterval = null;
+                this.isLocked = false;
+                this.isOver = false;
+
+                this.difficultyKey = (document.getElementById('difficultySelect').value || 'easy');
+                this.newGame();
+            }
+
+            setGrid(cols) {
+                this.board.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            }
+
+            pickEmojis(pairCount) {
+                // Shuffle pool, take pairCount
+                const shuffled = [...this.emojiPool].sort(() => Math.random() - 0.5);
+                const chosen = shuffled.slice(0, pairCount);
+                return chosen;
+            }
+
+            newGame() {
+                this.stopTimer();
+
+                const diff = this.difficulties[this.difficultyKey] || this.difficulties.easy;
+                const totalCards = diff.cols * diff.rows;
+                const pairCount = Math.floor(totalCards / 2);
+
+                this.setGrid(diff.cols);
+
+                // Miss limit rule: "missed attempts is grid size (width) before failing"
+                // i.e., allowed misses = number of columns
+                this.missLimit = diff.cols;
+
+                const emojis = this.pickEmojis(pairCount);
+
+                this.cards = [...emojis, ...emojis]
+                    .sort(() => Math.random() - 0.5)
+                    .map((emoji, index) => ({
+                        id: index,
+                        emoji,
+                        flipped: false,
+                        matched: false
+                    }));
+
+                this.flippedCards = [];
+                this.matchedPairs = 0;
+                this.moves = 0;
+                this.misses = 0;
+                this.seconds = 0;
+                this.isLocked = false;
+                this.isOver = false;
+
+                this.updateDisplay();
+                this.render();
+
+                this.statusEl.textContent = 'Match the pairs!';
+                this.hintEl.textContent = `Miss limit: ${this.missLimit} (based on grid width ${diff.cols}).`;
+
+                this.startTimer();
+            }
+
+            startTimer() {
+                this.timerInterval = setInterval(() => {
+                    if (this.isOver) return;
+                    this.seconds++;
+                    this.updateDisplay();
+                }, 1000);
+            }
+
+            stopTimer() {
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                this.timerInterval = null;
+            }
+
+            updateDisplay() {
+                const m = Math.floor(this.seconds / 60);
+                const s = this.seconds % 60;
+                this.timerEl.innerHTML = `⏱️ <strong>${m}:${s.toString().padStart(2, '0')}</strong>`;
+                this.movesEl.innerHTML = `🔄 <strong>${this.moves}</strong>`;
+                this.missesEl.innerHTML = `❌ <strong>${this.misses}</strong>/<span id="missLimit">${this.missLimit}</span>`;
+                // keep reference updated (because innerHTML replaced span)
+                this.missLimitEl = document.getElementById('missLimit');
+            }
+
+            render() {
+                this.board.innerHTML = this.cards.map(card => `
+                    <div class="card ${card.flipped ? 'flipped' : ''} ${card.matched ? 'matched' : ''}"
+                         data-id="${card.id}"
+                         role="button"
+                         aria-label="card">
+                        ${card.flipped || card.matched ? card.emoji : '❔'}
+                    </div>
+                `).join('');
+
+                this.board.querySelectorAll('.card').forEach(el => {
+                    el.addEventListener('click', () => {
+                        const id = parseInt(el.dataset.id, 10);
+                        this.handleCardClick(id);
+                    });
+                });
+            }
+
+            handleCardClick(id) {
+                if (this.isLocked || this.isOver) return;
+
+                const card = this.cards[id];
+                if (!card || card.flipped || card.matched) return;
+                if (this.flippedCards.length >= 2) return;
+
+                card.flipped = true;
+                this.flippedCards.push(card);
+                this.render();
+
+                if (this.flippedCards.length === 2) {
+                    this.moves++;
+                    this.updateDisplay();
+                    this.checkMatch();
+                }
+            }
+
+            checkMatch() {
+                this.isLocked = true;
+                const [card1, card2] = this.flippedCards;
+
+                if (card1.emoji === card2.emoji) {
+                    card1.matched = true;
+                    card2.matched = true;
+                    this.matchedPairs++;
+                    this.flippedCards = [];
+                    this.isLocked = false;
+                    this.render();
+
+                    const totalPairs = this.cards.length / 2;
+                    if (this.matchedPairs === totalPairs) {
+                        this.gameWon();
+                    }
+                } else {
+                    setTimeout(() => {
+                        card1.flipped = false;
+                        card2.flipped = false;
+                        this.flippedCards = [];
+                        this.isLocked = false;
+
+                        this.misses++;
+                        this.updateDisplay();
+
+                        if (this.misses >= this.missLimit) {
+                            this.gameLost();
+                            return;
+                        }
+
+                        this.statusEl.textContent = `No match. Misses: ${this.misses}/${this.missLimit}`;
+                        this.render();
+                    }, 900);
+                }
+            }
+
+            gameWon() {
+                this.isOver = true;
+                this.stopTimer();
+                this.statusEl.textContent = `🎉 You won in ${this.moves} moves, ${this.misses} misses, and ${this.seconds} seconds!`;
+
+                achievements.check({
+                    moves: this.moves,
+                    misses: this.misses,
+                    seconds: this.seconds,
+                    difficulty: this.difficultyKey
+                });
+            }
+
+            gameLost() {
+                this.isOver = true;
+                this.stopTimer();
+                this.statusEl.textContent = `❌ Game Over — you reached ${this.misses}/${this.missLimit} misses.`;
+
+                // Optional: reveal all cards on loss
+                this.cards.forEach(c => c.flipped = true);
+                this.render();
+            }
+        }
+
+        const achievements = new AchievementSystem(GAME_ID);
+        const game = new MemoryGame();
+
+        // UI wiring
+        document.getElementById('trophyBtn').addEventListener('click', () => achievements.toggleModal());
+        document.getElementById('newGameBtn').addEventListener('click', () => game.newGame());
+        document.getElementById('difficultySelect').addEventListener('change', (e) => {
+            game.difficultyKey = e.target.value;
+            game.newGame();
+        });
+    </script>
+</body>
+</html>
