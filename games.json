@@ -23,7 +23,7 @@
   {
     "id": "memory_match",
     "name": "Memory Match",
-    "file": "memory-match.html",
+    "file": "memory_match.html",
     "image": "",
     "description": "Classic card matching game - flip cards to find pairs of matching emojis.",
     "difficultyRating": 2,
