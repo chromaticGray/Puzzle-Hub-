@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Hitori</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --text-color: #333;
+            --cell-bg: #fff;
+            --cell-hover: #e9ecef;
+            --cell-black: #343a40;
+            --cell-circle: #fff;
+            --border-color: #dee2e6;
+            --accent-color: #3b82f6;
+            --error-color: #ef4444;
+            --success-color: #22c55e;
+            --hint-color: #f59e0b;
+            --gold-color: #eab308;
+        }
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 18px;
+            touch-action: manipulation;
+        }
+
+        .topbar {
+            width: 100%;
+            max-width: 980px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .topbar .left {
+            display:flex;
+            align-items: baseline;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .topbar h1 {
+            margin: 0;
+            font-size: 1.6rem;
+        }
+        .subtle {
+            color: #6b7280;
+            font-weight: 600;
+            font-size: .9rem;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 14px;
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: bold;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .controls {
+            margin: 12px 0 16px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button, select {
+            padding: 10px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+            touch-action: manipulation;
+            min-height: 44px;
+        }
+
+        button:active { 
+            transform: scale(0.97);
+            background-color: var(--cell-hover); 
+        }
+        
+        button.primary {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+        }
+        button.primary:active { 
+            background-color: #2563eb; 
+            transform: scale(0.97);
+        }
+        
+        button.hint-btn {
+            background-color: var(--hint-color);
+            color: white;
+            border: none;
+        }
+        button.hint-btn:active { background-color: #d97706; }
+
+        button.trophy-btn {
+            background-color: var(--gold-color);
+            color: white;
+            border: none;
+        }
+        button.trophy-btn:active { background-color: #ca8a04; }
+
+        button.link-btn {
+            background: white;
+            border: 1px solid var(--border-color);
+        }
+
+        .game-container {
+            display: grid;
+            gap: 2px;
+            background-color: #adb5bd;
+            border: 2px solid #adb5bd;
+            margin-bottom: 16px;
+            user-select: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            touch-action: manipulation;
+        }
+
+        .cell {
+            background-color: var(--cell-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 44px;
+            height: 44px;
+            transition: background-color 0.1s;
+            position: relative;
+            touch-action: manipulation;
+        }
+
+        @media (max-width: 500px) {
+            .cell { width: 36px; height: 36px; font-size: 1rem; }
+        }
+
+        @media (max-width: 400px) {
+            .cell { width: 32px; height: 32px; font-size: 0.95rem; }
+        }
+
+        .cell.black { background-color: var(--cell-black); color: #6c757d; }
+        .cell.circle { background-color: var(--cell-circle); box-shadow: inset 0 0 0 2px var(--success-color); color: var(--text-color); }
+        .cell.error-dup { color: var(--error-color); }
+        .cell.error-adj { background-color: #7f1d1d !important; }
+        
+        @keyframes flash {
+            0% { background-color: var(--hint-color); }
+            100% { background-color: var(--cell-bg); }
+        }
+        .cell.hint-flash { animation: flash 1s ease-out; }
+        
+        .status {
+            font-weight: bold;
+            min-height: 24px;
+            margin-bottom: 10px;
+            color: var(--text-color);
+            text-align: center;
+            width: 100%;
+            max-width: 980px;
+        }
+
+        /* Achievements Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 14px;
+        }
+        .modal-overlay.open { display: flex; }
+        
+        .modal {
+            background: white;
+            padding: 18px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 560px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .achievement-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            opacity: 0.6;
+            filter: grayscale(1);
+            transition: all 0.3s;
+        }
+        
+        .achievement-item.unlocked {
+            opacity: 1;
+            filter: grayscale(0);
+            background-color: #f0fdf4;
+            border-color: var(--success-color);
+        }
+        
+        .ach-icon { font-size: 1.8rem; margin-right: 12px; }
+        .ach-info h4 { margin: 0 0 4px 0; }
+        .ach-info p { margin: 0; font-size: 0.88rem; color: #666; }
+
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            bottom: 18px;
+            right: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 200;
+            pointer-events: none;
+        }
+        
+        .toast {
+            background: #333;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out forwards;
+            max-width: 360px;
+            pointer-events: auto;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .instructions {
+            width: 100%;
+            max-width: 980px;
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .instructions h3 { margin-top: 0; }
+        .instructions ul { padding-left: 20px; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="left">
+            <h1 id="gameTitle">Hitori</h1>
+            <span class="subtle" id="gameIdLabel"></span>
+        </div>
+        <div class="header-stats">
+            <span id="timer">Time: 00:00</span>
+            <span id="ach-count">🏆 0/5</span>
+            <button class="link-btn" id="backBtn" title="Back to hub">← Hub</button>
+        </div>
+    </div>
+
+    <div class="controls">
+        <select id="difficulty">
+            <option value="5">Easy (5×5)</option>
+            <option value="8" selected>Medium (8×8)</option>
+            <option value="10">Hard (10×10)</option>
+            <option value="12">Expert (12×12)</option>
+        </select>
+        <button class="primary" onclick="game.newGame()">New Game</button>
+        <button onclick="game.checkSolution()">Check</button>
+        <button class="hint-btn" onclick="game.getHint()">Hint</button>
+        <button class="trophy-btn" onclick="achievements.toggleModal()">🏆</button>
+        <button onclick="game.giveUp()">Solve</button>
+    </div>
+
+    <div class="status" id="status"></div>
+    <div id="grid" class="game-container"></div>
+
+    <div class="instructions">
+        <h3>Rules (Hitori)</h3>
+        <ul>
+            <li>Each row and column may only contain each number once in white (unshaded).</li>
+            <li>No two black cells can be adjacent horizontally or vertically (diagonals are fine).</li>
+            <li>All white cells must form a single connected area using orthogonal moves only.</li>
+        </ul>
+        <p><strong>Controls:</strong> Tap a cell to toggle: White → Shaded → Circled (Safe) → White.</p>
+    </div>
+
+    <!-- Achievements Modal -->
+    <div class="modal-overlay" id="achModal" onclick="if(event.target===this) achievements.toggleModal()">
+        <div class="modal">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                <h2 style="margin:0">Achievements</h2>
+                <button onclick="achievements.toggleModal()" style="border:1px solid var(--border-color); background:white; border-radius:10px;">Close</button>
+            </div>
+            <div class="achievement-list" id="achList"></div>
+            <p style="margin:12px 0 0; color:#666; font-size:.9rem;">
+                Achievements are stored per gameId in your browser (localStorage).
+            </p>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // Hub integration
+        const params = new URLSearchParams(location.search);
+        const GAME_ID = (params.get('gameId') || 'hitori').toLowerCase();
+        const RETURN_TO = params.get('return') || '../index.html';
+
+        document.getElementById('gameTitle').textContent = 'Hitori';
+        document.getElementById('gameIdLabel').textContent = `(${GAME_ID})`;
+        document.title = `Hitori — ${GAME_ID}`;
+        document.getElementById('backBtn').addEventListener('click', () => {
+            location.href = RETURN_TO;
+        });
+
+        class AchievementSystem {
+            constructor(gameId) {
+                this.gameId = gameId;
+                this.storageKey = `ach_${this.gameId}`;
+                this.unlocked = this.loadUnlocked();
+
+                this.list = [
+                    { id: 'baby_steps', icon: '👶', title: 'Baby Steps', desc: 'Solve a 5×5 puzzle' },
+                    { id: 'getting_serious', icon: '🧠', title: 'Getting Serious', desc: 'Solve an 8×8 puzzle' },
+                    { id: 'mastermind', icon: '🧙‍♂️', title: 'Mastermind', desc: 'Solve a 12×12 puzzle' },
+                    { id: 'pure_logic', icon: '✨', title: 'Pure Logic', desc: 'Solve any puzzle without Hints or Check' },
+                    { id: 'speed_demon', icon: '⚡', title: 'Speed Demon', desc: 'Solve a 5×5 puzzle in under 30 seconds' }
+                ];
+
+                this.renderList();
+                this.updateCount();
+            }
+
+            loadUnlocked(){
+                try{
+                    const raw = localStorage.getItem(this.storageKey);
+                    if(!raw) return [];
+                    const parsed = JSON.parse(raw);
+                    return Array.isArray(parsed) ? parsed : [];
+                }catch{
+                    return [];
+                }
+            }
+
+            saveUnlocked(){
+                localStorage.setItem(this.storageKey, JSON.stringify(this.unlocked));
+            }
+
+            check(game) {
+                const newUnlocks = [];
+                
+                if (game.size === 5) this.tryUnlock('baby_steps', newUnlocks);
+                if (game.size === 8) this.tryUnlock('getting_serious', newUnlocks);
+                if (game.size === 12) this.tryUnlock('mastermind', newUnlocks);
+
+                if (!game.usedHint && !game.usedCheck) this.tryUnlock('pure_logic', newUnlocks);
+                if (game.size === 5 && game.seconds < 30) this.tryUnlock('speed_demon', newUnlocks);
+
+                if (newUnlocks.length > 0) {
+                    this.saveUnlocked();
+                    this.renderList();
+                    this.updateCount();
+                }
+            }
+
+            tryUnlock(id, newUnlocks) {
+                if (!this.unlocked.includes(id)) {
+                    this.unlocked.push(id);
+                    newUnlocks.push(id);
+                    const ach = this.list.find(a => a.id === id);
+                    if (ach) this.showToast(ach);
+                }
+            }
+
+            showToast(ach) {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.innerHTML = `<span>${ach.icon}</span> <div><strong>Unlocked: ${ach.title}</strong><br><small>${ach.desc}</small></div>`;
+                container.appendChild(toast);
+                setTimeout(() => toast.remove(), 4000);
+            }
+
+            renderList() {
+                const listEl = document.getElementById('achList');
+                listEl.innerHTML = this.list.map(ach => {
+                    const isUnlocked = this.unlocked.includes(ach.id);
+                    return `
+                        <div class="achievement-item ${isUnlocked ? 'unlocked' : ''}">
+                            <div class="ach-icon">${ach.icon}</div>
+                            <div class="ach-info">
+                                <h4>${ach.title}</h4>
+                                <p>${ach.desc}</p>
+                            </div>
+                            <div style="margin-left:auto; font-size:1.1rem;">${isUnlocked ? '✅' : '🔒'}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            updateCount() {
+                document.getElementById('ach-count').textContent = `🏆 ${this.unlocked.length}/${this.list.length}`;
+            }
+
+            toggleModal() {
+                document.getElementById('achModal').classList.toggle('open');
+            }
+        }
+
+        class HitoriGame {
+            constructor() {
+                this.size = 8;
+                this.grid = []; 
+                this.state = []; 
+                this.solution = []; 
+                this.container = document.getElementById('grid');
+                this.statusEl = document.getElementById('status');
+                this.timerEl = document.getElementById('timer');
+                
+                this.timerInterval = null;
+                this.seconds = 0;
+                this.usedHint = false;
+                this.usedCheck = false;
+                this.isPlaying = false;
+
+                this.newGame();
+            }
+
+            newGame() {
+                const diffSelect = document.getElementById('difficulty');
+                this.size = parseInt(diffSelect.value, 10);
+                
+                this.stopTimer();
+                this.seconds = 0;
+                this.usedHint = false;
+                this.usedCheck = false;
+                this.isPlaying = true;
+                this.updateTimerDisplay();
+                this.startTimer();
+
+                this.generatePuzzle();
+                this.render();
+                this.setStatus("");
+            }
+
+            startTimer() {
+                this.timerInterval = setInterval(() => {
+                    this.seconds++;
+                    this.updateTimerDisplay();
+                }, 1000);
+            }
+
+            stopTimer() {
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                this.timerInterval = null;
+            }
+
+            updateTimerDisplay() {
+                const m = Math.floor(this.seconds / 60).toString().padStart(2, '0');
+                const s = (this.seconds % 60).toString().padStart(2, '0');
+                this.timerEl.textContent = `Time: ${m}:${s}`;
+            }
+
+            setStatus(msg, color = "var(--text-color)") {
+                this.statusEl.textContent = msg;
+                this.statusEl.style.color = color;
+            }
+
+            generatePuzzle() {
+                // Latin Square base
+                let board = Array(this.size).fill().map(() => Array(this.size).fill(0));
+                for (let r = 0; r < this.size; r++) {
+                    for (let c = 0; c < this.size; c++) {
+                        board[r][c] = ((r + c) % this.size) + 1;
+                    }
+                }
+                this.shuffle(board);
+                
+                // Choose a valid black-cell pattern
+                let isBlack = Array(this.size).fill().map(() => Array(this.size).fill(false));
+                let attempts = this.size * this.size * 2;
+                
+                while (attempts > 0) {
+                    let r = Math.floor(Math.random() * this.size);
+                    let c = Math.floor(Math.random() * this.size);
+                    
+                    if (!isBlack[r][c]) {
+                        isBlack[r][c] = true;
+                        if (this.hasAdjacentBlack(isBlack, r, c) || !this.checkConnectivity(isBlack)) {
+                            isBlack[r][c] = false;
+                        }
+                    }
+                    attempts--;
+                }
+
+                // Create duplicates primarily on black cells
+                for (let r = 0; r < this.size; r++) {
+                    for (let c = 0; c < this.size; c++) {
+                        if (isBlack[r][c]) {
+                            if (Math.random() > 0.5) {
+                                let candidates = [];
+                                for(let k=0; k<this.size; k++) if(!isBlack[r][k] && k !== c) candidates.push(k);
+                                if(candidates.length > 0) board[r][c] = board[r][candidates[Math.floor(Math.random() * candidates.length)]];
+                            } else {
+                                let candidates = [];
+                                for(let k=0; k<this.size; k++) if(!isBlack[k][c] && k !== r) candidates.push(k);
+                                if(candidates.length > 0) board[r][c] = board[candidates[Math.floor(Math.random() * candidates.length)]][c];
+                            }
+                        }
+                    }
+                }
+
+                this.grid = board;
+                this.solution = isBlack;
+                this.state = Array(this.size).fill().map(() => Array(this.size).fill(0));
+            }
+
+            shuffle(board) {
+                for (let i = this.size - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [board[i], board[j]] = [board[j], board[i]];
+                }
+                let newBoard = board[0].map((_, colIndex) => board.map(row => row[colIndex]));
+                for (let i = this.size - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [newBoard[i], newBoard[j]] = [newBoard[j], newBoard[i]];
+                }
+                for(let r=0; r<this.size; r++) {
+                    for(let c=0; c<this.size; c++) board[r][c] = newBoard[r][c];
+                }
+            }
+
+            hasAdjacentBlack(isBlackGrid, r, c) {
+                const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                for (let [dr, dc] of dirs) {
+                    let nr = r + dr, nc = c + dc;
+                    if (nr >= 0 && nr < this.size && nc >= 0 && nc < this.size) {
+                        if (isBlackGrid[nr][nc]) return true;
+                    }
+                }
+                return false;
+            }
+
+            checkConnectivity(isBlackGrid) {
+                let startR = -1, startC = -1;
+                let whiteCount = 0;
+                
+                for(let r=0; r<this.size; r++) {
+                    for(let c=0; c<this.size; c++) {
+                        if(!isBlackGrid[r][c]) {
+                            if(startR === -1) { startR = r; startC = c; }
+                            whiteCount++;
+                        }
+                    }
+                }
+                if (whiteCount === 0) return false;
+
+                let visited = new Set();
+                let queue = [[startR, startC]];
+                visited.add(`${startR},${startC}`);
+                let visitedCount = 0;
+
+                while(queue.length > 0) {
+                    let [r, c] = queue.shift();
+                    visitedCount++;
+                    const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                    for (let [dr, dc] of dirs) {
+                        let nr = r + dr, nc = c + dc;
+                        if (nr >= 0 && nr < this.size && nc >= 0 && nc < this.size) {
+                            if (!isBlackGrid[nr][nc] && !visited.has(`${nr},${nc}`)) {
+                                visited.add(`${nr},${nc}`);
+                                queue.push([nr, nc]);
+                            }
+                        }
+                    }
+                }
+                return visitedCount === whiteCount;
+            }
+
+            render() {
+                this.container.innerHTML = '';
+                this.container.style.gridTemplateColumns = `repeat(${this.size}, 1fr)`;
+
+                for (let r = 0; r < this.size; r++) {
+                    for (let c = 0; c < this.size; c++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        cell.textContent = this.grid[r][c];
+
+                        if (this.state[r][c] === 1) cell.classList.add('black');
+                        if (this.state[r][c] === 2) cell.classList.add('circle');
+
+                        cell.addEventListener('click', () => { if(this.isPlaying) this.toggleCell(r, c); });
+                        this.container.appendChild(cell);
+                    }
+                }
+            }
+
+            toggleCell(r, c) {
+                this.state[r][c] = (this.state[r][c] + 1) % 3;
+                this.render();
+                this.setStatus("");
+            }
+
+            checkSolution() {
+                if(!this.isPlaying) return;
+                this.usedCheck = true;
+                
+                let isBlack = this.state.map(row => row.map(val => val === 1));
+                let valid = true;
+                let errorMsg = "";
+
+                document.querySelectorAll('.cell').forEach(c => c.classList.remove('error-dup', 'error-adj'));
+
+                // Rule 2: adjacency of blacks
+                for(let r=0; r<this.size; r++) {
+                    for(let c=0; c<this.size; c++) {
+                        if(isBlack[r][c] && this.hasAdjacentBlack(isBlack, r, c)) {
+                            valid = false;
+                            errorMsg = "Rule Violation: Adjacent shaded cells found.";
+                            this.getCellEl(r, c).classList.add('error-adj');
+                        }
+                    }
+                }
+
+                // Rule 3: white connectivity
+                if (!this.checkConnectivity(isBlack)) {
+                    valid = false;
+                    errorMsg = errorMsg || "Rule Violation: Unshaded area is disconnected.";
+                }
+
+                // Rule 1: duplicates in rows/cols among white cells
+                const checkDup = (isRow) => {
+                    for(let i=0; i<this.size; i++) {
+                        let seen = {};
+                        for(let j=0; j<this.size; j++) {
+                            let r = isRow ? i : j;
+                            let c = isRow ? j : i;
+                            if(!isBlack[r][c]) {
+                                let val = this.grid[r][c];
+                                if(seen[val] !== undefined) {
+                                    valid = false;
+                                    errorMsg = errorMsg || "Rule Violation: Duplicate numbers in row/column.";
+                                    this.getCellEl(r, c).classList.add('error-dup');
+                                    let prev = isRow ? [i, seen[val]] : [seen[val], i];
+                                    this.getCellEl(prev[0], prev[1]).classList.add('error-dup');
+                                }
+                                seen[val] = isRow ? c : r;
+                            }
+                        }
+                    }
+                };
+                checkDup(true);
+                checkDup(false);
+
+                if (valid) {
+                    this.stopTimer();
+                    this.isPlaying = false;
+                    this.setStatus("Puzzle Solved! Great job!", "var(--success-color)");
+                    achievements.check(this);
+                } else {
+                    this.setStatus(errorMsg, "var(--error-color)");
+                }
+            }
+
+            getHint() {
+                if(!this.isPlaying) return;
+                this.usedHint = true;
+                
+                // 1) Sandwich logic
+                for(let r=0; r<this.size; r++) {
+                    for(let c=1; c<this.size-1; c++) {
+                        if(this.grid[r][c-1] === this.grid[r][c+1] && this.state[r][c] !== 2) {
+                            this.applyHint(r, c, 2, "Sandwich: cell between identical numbers must be circled.");
+                            return;
+                        }
+                    }
+                }
+                for(let c=0; c<this.size; c++) {
+                    for(let r=1; r<this.size-1; r++) {
+                        if(this.grid[r-1][c] === this.grid[r+1][c] && this.state[r][c] !== 2) {
+                            this.applyHint(r, c, 2, "Sandwich: cell between identical numbers must be circled.");
+                            return;
+                        }
+                    }
+                }
+
+                // 2) Black neighbors must be white
+                for(let r=0; r<this.size; r++) {
+                    for(let c=0; c<this.size; c++) {
+                        if(this.state[r][c] === 1) {
+                            const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                            for(let [dr, dc] of dirs) {
+                                let nr = r+dr, nc = c+dc;
+                                if(nr>=0 && nr<this.size && nc>=0 && nc<this.size) {
+                                    if(this.state[nr][nc] !== 2) {
+                                        this.applyHint(nr, nc, 2, "Adjacency: neighbors of black cells must be circled.");
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 3) Exclusion: duplicates must be black
+                for(let r=0; r<this.size; r++) {
+                    for(let c=0; c<this.size; c++) {
+                        if(this.state[r][c] === 2) {
+                            let val = this.grid[r][c];
+                            for(let k=0; k<this.size; k++) {
+                                if(k!==c && this.grid[r][k] === val && this.state[r][k] !== 1) {
+                                    this.applyHint(r, k, 1, `Exclusion: duplicate ${val} must be shaded.`);
+                                    return;
+                                }
+                            }
+                            for(let k=0; k<this.size; k++) {
+                                if(k!==r && this.grid[k][c] === val && this.state[k][c] !== 1) {
+                                    this.applyHint(k, c, 1, `Exclusion: duplicate ${val} must be shaded.`);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                this.setStatus("No basic hints found. Try checking connectivity!", "var(--hint-color)");
+            }
+
+            applyHint(r, c, newState, msg) {
+                this.state[r][c] = newState;
+                this.render();
+                const cell = this.getCellEl(r, c);
+                cell.classList.add('hint-flash');
+                setTimeout(() => cell.classList.remove('hint-flash'), 1000);
+                this.setStatus("Hint: " + msg, "var(--hint-color)");
+            }
+
+            getCellEl(r, c) {
+                return this.container.children[r * this.size + c];
+            }
+
+            giveUp() {
+                this.stopTimer();
+                this.isPlaying = false;
+                for(let r=0; r<this.size; r++) {
+                    for(let c=0; c<this.size; c++) {
+                        this.state[r][c] = this.solution[r][c] ? 1 : 2;
+                    }
+                }
+                this.render();
+                this.setStatus("Solution revealed.", "var(--accent-color)");
+            }
+        }
+
+        const achievements = new AchievementSystem(GAME_ID);
+        const game = new HitoriGame();
+    </script>
+</body>
+</html>

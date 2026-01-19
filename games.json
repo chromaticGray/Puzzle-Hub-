@@ -1,0 +1,44 @@
+[
+  {
+    "id": "hitori",
+    "name": "Hitori",
+    "file": "hitori.html",
+    "image": "",
+    "description": "Eliminate duplicates by shading cells while keeping all white cells connected.",
+    "difficultyRating": 3,
+    "isFavorite": false,
+    "rules": [
+      "Each row and column may only contain each number once in white (unshaded).",
+      "No two black cells may be adjacent orthogonally (diagonals are fine).",
+      "All white cells must form one connected orthogonal region."
+    ],
+    "achievements": [
+      { "id": "baby_steps", "title": "Baby Steps", "description": "Solve a 5x5 puzzle", "unlocked": false },
+      { "id": "getting_serious", "title": "Getting Serious", "description": "Solve an 8x8 puzzle", "unlocked": false },
+      { "id": "mastermind", "title": "Mastermind", "description": "Solve a 12x12 puzzle", "unlocked": false },
+      { "id": "pure_logic", "title": "Pure Logic", "description": "Solve without using Hint or Check", "unlocked": false },
+      { "id": "speed_demon", "title": "Speed Demon", "description": "Solve a 5x5 in under 30 seconds", "unlocked": false }
+    ]
+  },
+  {
+    "id": "memory_match",
+    "name": "Memory Match",
+    "file": "memory-match.html",
+    "image": "",
+    "description": "Classic card matching game - flip cards to find pairs of matching emojis.",
+    "difficultyRating": 2,
+    "isFavorite": false,
+    "rules": [
+      "Flip two cards at a time to reveal emojis.",
+      "If they match, they stay revealed.",
+      "If they don't match, they flip back over.",
+      "Match all pairs to win!"
+    ],
+    "achievements": [
+      { "id": "first_win", "title": "First Victory", "description": "Complete your first game", "unlocked": false },
+      { "id": "speed_demon", "title": "Speed Demon", "description": "Win in under 30 seconds", "unlocked": false },
+      { "id": "perfect_memory", "title": "Perfect Memory", "description": "Win with 8 moves or less", "unlocked": false },
+      { "id": "persistent", "title": "Persistent", "description": "Complete 10 games", "unlocked": false }
+    ]
+  }
+]
