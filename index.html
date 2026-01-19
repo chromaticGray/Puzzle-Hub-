@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Puzzle Hub</title>
+  <style>
+    :root{
+      --bg: #0b1020;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.09);
+      --border: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.68);
+      --accent: #7c3aed;
+      --accent2: #22c55e;
+      --warn: #f59e0b;
+      --danger:#ef4444;
+      --shadow: 0 18px 45px rgba(0,0,0,.45);
+      --radius: 14px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background:
+        radial-gradient(1200px 600px at 10% 10%, rgba(124,58,237,.35), transparent 55%),
+        radial-gradient(900px 500px at 90% 30%, rgba(34,197,94,.25), transparent 55%),
+        radial-gradient(900px 500px at 50% 95%, rgba(59,130,246,.22), transparent 55%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header{
+      padding: 24px 18px 10px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .topbar{
+      display:flex;
+      gap: 14px;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .brand h1{
+      margin:0;
+      font-size: 1.5rem;
+      letter-spacing: .2px;
+    }
+    .brand p{
+      margin: 6px 0 0;
+      color: var(--muted);
+      max-width: 70ch;
+      line-height: 1.35;
+      font-size: .95rem;
+    }
+
+    .controls{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .chip, select, input[type="search"], button{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 12px;
+      font-size: .92rem;
+      outline: none;
+    }
+
+    select { padding-right: 34px; }
+    input[type="search"]{
+      width: min(340px, 78vw);
+    }
+
+    button{
+      cursor:pointer;
+      transition: transform .06s ease, background .15s ease, border-color .15s ease;
+    }
+    button:hover{ background: rgba(255,255,255,.10); }
+    button:active{ transform: translateY(1px); }
+
+    .chip{
+      display:flex;
+      gap: 8px;
+      align-items: center;
+      user-select: none;
+    }
+    .chip input{ margin:0; }
+
+    main{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 14px 18px 40px;
+    }
+
+    .metaRow{
+      display:flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: .92rem;
+      margin: 8px 0 14px;
+    }
+    .metaRow .right{
+      display:flex; gap: 8px; align-items:center; flex-wrap:wrap;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+    }
+
+    .card{
+      grid-column: span 6;
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.05));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow:hidden;
+      box-shadow: var(--shadow);
+    }
+    @media (max-width: 980px){
+      .card{ grid-column: span 12; }
+    }
+
+    .cardTop{
+      display:flex;
+      gap: 12px;
+      padding: 14px;
+      align-items: stretch;
+    }
+
+    .thumb{
+      width: 120px;
+      height: 88px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      flex: 0 0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color: rgba(255,255,255,.55);
+      font-size: .9rem;
+    }
+    .thumb img{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      display:block;
+    }
+
+    .cardTitleRow{
+      display:flex;
+      align-items:flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .titleBlock h2{
+      margin:0;
+      font-size: 1.12rem;
+    }
+    .titleBlock .sub{
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: .92rem;
+      line-height: 1.25;
+    }
+
+    .iconBtn{
+      border-radius: 12px;
+      padding: 10px 10px;
+      min-width: 44px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .star{
+      font-size: 1.1rem;
+      color: rgba(255,255,255,.78);
+    }
+    .star.on{ color: #fbbf24; }
+
+    .badges{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .badge{
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: .82rem;
+      color: rgba(255,255,255,.86);
+    }
+
+    .difficultyDots{
+      display:flex;
+      gap: 4px;
+      align-items:center;
+    }
+    .dot{
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.22);
+    }
+    .dot.on{ background: var(--warn); }
+
+    .cardActions{
+      display:flex;
+      gap: 10px;
+      padding: 0 14px 14px;
+      flex-wrap: wrap;
+    }
+    .primary{
+      background: rgba(124,58,237,.22);
+      border-color: rgba(124,58,237,.45);
+    }
+    .primary:hover{
+      background: rgba(124,58,237,.30);
+      border-color: rgba(124,58,237,.65);
+    }
+    .success{
+      background: rgba(34,197,94,.18);
+      border-color: rgba(34,197,94,.42);
+    }
+    .success:hover{
+      background: rgba(34,197,94,.25);
+      border-color: rgba(34,197,94,.62);
+    }
+
+    .cardActions button{
+      padding: 10px 12px;
+      border-radius: 12px;
+    }
+
+    /* Modal */
+    .overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 16px;
+      z-index: 200;
+    }
+    .overlay.open{ display:flex; }
+
+    .modal{
+      width: min(820px, 100%);
+      max-height: min(82vh, 920px);
+      overflow: auto;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(12,16,32,.92);
+      box-shadow: var(--shadow);
+    }
+
+    .modalHeader{
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      position: sticky;
+      top:0;
+      background: rgba(12,16,32,.92);
+      backdrop-filter: blur(10px);
+    }
+    .modalHeader h3{ margin:0; font-size: 1.05rem; }
+    .closeBtn{
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .modalBody{ padding: 16px; }
+    .modalBody p, .modalBody li{
+      color: rgba(255,255,255,.82);
+      line-height: 1.45;
+    }
+    .muted{ color: var(--muted); }
+
+    .achGrid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .ach{
+      grid-column: span 6;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255,255,255,.05);
+      display:flex;
+      gap: 10px;
+      align-items:flex-start;
+    }
+    @media (max-width: 740px){
+      .ach{ grid-column: span 12; }
+    }
+    .ach.locked{ opacity: .65; filter: grayscale(1); }
+    .ach .badgeSmall{
+      border-radius: 10px;
+      padding: 6px 8px;
+      font-size: .8rem;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.86);
+      flex: 0 0 auto;
+    }
+    .ach h4{ margin: 0; font-size: .98rem; }
+    .ach p{ margin: 4px 0 0; font-size: .9rem; color: rgba(255,255,255,.75); }
+
+    .footerNote{
+      margin-top: 16px;
+      color: rgba(255,255,255,.62);
+      font-size: .9rem;
+    }
+
+    /* Small helpers */
+    .row{ display:flex; align-items:center; gap: 10px; flex-wrap: wrap; }
+    .spacer{ flex:1; }
+    .pill{
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.82);
+      font-size: .82rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div class="brand">
+        <h1>Puzzle Hub</h1>
+        <p>Browse your games, sort by difficulty, star favorites, read rules, and review achievements — each game opens in its own HTML file.</p>
+      </div>
+
+      <div class="controls">
+        <input id="search" type="search" placeholder="Search games…" autocomplete="off" />
+
+        <select id="sort">
+          <option value="difficulty-asc">Difficulty: Easy → Hard</option>
+          <option value="difficulty-desc">Difficulty: Hard → Easy</option>
+          <option value="name-asc">Name: A → Z</option>
+          <option value="name-desc">Name: Z → A</option>
+        </select>
+
+        <label class="chip" title="Show only favorites">
+          <input id="onlyFav" type="checkbox" />
+          Favorites only
+        </label>
+
+        <button id="resetPrefs">Reset</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="metaRow">
+      <div id="statusLine">Loading games…</div>
+      <div class="right">
+        <span class="pill" id="countPill">0 games</span>
+        <span class="pill" id="favPill">0 favorites</span>
+      </div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="footerNote">
+      <div><strong>Mobile Tip:</strong> For best experience on Android, use Chrome or Firefox and save this page to your home screen!</div>
+    </div>
+  </main>
+
+  <!-- Modal -->
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modalHeader">
+        <h3 id="modalTitle">Details</h3>
+        <button class="closeBtn" id="closeModal">Close</button>
+      </div>
+      <div class="modalBody" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    const LS_KEYS = {
+      favorites: 'hub_favorites_v1',
+      sort: 'hub_sort_v1',
+      onlyFav: 'hub_onlyFav_v1'
+    };
+
+    const state = {
+      games: [],
+      favorites: loadJSON(LS_KEYS.favorites, {}),
+      sort: localStorage.getItem(LS_KEYS.sort) || 'difficulty-asc',
+      onlyFav: (localStorage.getItem(LS_KEYS.onlyFav) || 'false') === 'true',
+      query: ''
+    };
+
+    const el = {
+      grid: document.getElementById('grid'),
+      statusLine: document.getElementById('statusLine'),
+      countPill: document.getElementById('countPill'),
+      favPill: document.getElementById('favPill'),
+      search: document.getElementById('search'),
+      sort: document.getElementById('sort'),
+      onlyFav: document.getElementById('onlyFav'),
+      resetPrefs: document.getElementById('resetPrefs'),
+      overlay: document.getElementById('overlay'),
+      modalTitle: document.getElementById('modalTitle'),
+      modalBody: document.getElementById('modalBody'),
+      closeModal: document.getElementById('closeModal')
+    };
+
+    init();
+
+    async function init(){
+      el.sort.value = state.sort;
+      el.onlyFav.checked = state.onlyFav;
+
+      wireUI();
+
+      try{
+        const res = await fetch('games.json', { cache: 'no-store' });
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        state.games = normalizeGames(data);
+        el.statusLine.textContent = `Loaded ${state.games.length} games`;
+      }catch(err){
+        state.games = normalizeGames(fallbackGames());
+        el.statusLine.textContent = 'Using built-in game list (could not load games.json)';
+      }
+
+      render();
+    }
+
+    function wireUI(){
+      el.search.addEventListener('input', () => {
+        state.query = (el.search.value || '').trim().toLowerCase();
+        render();
+      });
+
+      el.sort.addEventListener('change', () => {
+        state.sort = el.sort.value;
+        localStorage.setItem(LS_KEYS.sort, state.sort);
+        render();
+      });
+
+      el.onlyFav.addEventListener('change', () => {
+        state.onlyFav = el.onlyFav.checked;
+        localStorage.setItem(LS_KEYS.onlyFav, String(state.onlyFav));
+        render();
+      });
+
+      el.resetPrefs.addEventListener('click', () => {
+        state.favorites = {};
+        state.sort = 'difficulty-asc';
+        state.onlyFav = false;
+        state.query = '';
+
+        localStorage.removeItem(LS_KEYS.favorites);
+        localStorage.setItem(LS_KEYS.sort, state.sort);
+        localStorage.setItem(LS_KEYS.onlyFav, 'false');
+
+        el.sort.value = state.sort;
+        el.onlyFav.checked = state.onlyFav;
+        el.search.value = '';
+        render();
+      });
+
+      el.closeModal.addEventListener('click', closeModal);
+      el.overlay.addEventListener('click', (e) => { if(e.target === el.overlay) closeModal(); });
+      window.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeModal(); });
+    }
+
+    function normalizeGames(data){
+      if(!Array.isArray(data)) return [];
+      return data
+        .filter(x => x && typeof x === 'object')
+        .map((g, idx) => ({
+          id: String(g.id || g.name || ('game_' + idx)).toLowerCase().replace(/\s+/g,'_'),
+          name: String(g.name || 'Untitled Game'),
+          file: String(g.file || (String(g.name || 'game') + '.html')),
+          image: (g.image && String(g.image).trim()) ? String(g.image).trim() : '',
+          description: String(g.description || ''),
+          difficultyRating: clampInt(g.difficultyRating ?? 3, 1, 5),
+          isFavorite: !!g.isFavorite,
+          rules: Array.isArray(g.rules) ? g.rules.map(String) : [],
+          achievements: Array.isArray(g.achievements) ? g.achievements.map(a => ({
+            id: String(a?.id || ''),
+            title: String(a?.title || 'Achievement'),
+            description: String(a?.description || ''),
+            unlocked: !!a?.unlocked
+          })) : []
+        }));
+    }
+
+    function render(){
+      const games = applyFiltersAndSort(state.games);
+      const favCount = countFavorites(state.games);
+
+      el.countPill.textContent = `${games.length} game${games.length===1?'':'s'}`;
+      el.favPill.textContent = `${favCount} favorite${favCount===1?'':'s'}`;
+
+      el.grid.innerHTML = games.map(renderCard).join('');
+
+      for (const g of games){
+        const starBtn = document.getElementById(`star_${cssId(g.id)}`);
+        const openBtn = document.getElementById(`open_${cssId(g.id)}`);
+        const rulesBtn = document.getElementById(`rules_${cssId(g.id)}`);
+        const achBtn = document.getElementById(`ach_${cssId(g.id)}`);
+
+        if(starBtn) starBtn.addEventListener('click', () => toggleFavorite(g.id));
+        if(openBtn) openBtn.addEventListener('click', () => openGame(g));
+        if(rulesBtn) rulesBtn.addEventListener('click', () => showRules(g));
+        if(achBtn) achBtn.addEventListener('click', () => showAchievements(g));
+      }
+    }
+
+    function applyFiltersAndSort(all){
+      let list = [...all];
+
+      list = list.map(g => ({ ...g, _fav: getFavorite(g) }));
+
+      if(state.onlyFav) list = list.filter(g => g._fav);
+
+      if(state.query){
+        const q = state.query;
+        list = list.filter(g =>
+          g.name.toLowerCase().includes(q) ||
+          g.description.toLowerCase().includes(q)
+        );
+      }
+
+      list.sort((a,b) => {
+        switch(state.sort){
+          case 'difficulty-asc': return (a.difficultyRating - b.difficultyRating) || a.name.localeCompare(b.name);
+          case 'difficulty-desc': return (b.difficultyRating - a.difficultyRating) || a.name.localeCompare(b.name);
+          case 'name-asc': return a.name.localeCompare(b.name);
+          case 'name-desc': return b.name.localeCompare(a.name);
+          default: return 0;
+        }
+      });
+
+      return list;
+    }
+
+    function renderCard(g){
+      const fav = getFavorite(g);
+      const unlocked = (g.achievements || []).filter(a => a.unlocked).length;
+      const totalAch = (g.achievements || []).length;
+
+      return `
+        <section class="card" aria-label="${escapeHtml(g.name)}">
+          <div class="cardTop">
+            <div class="thumb">
+              ${g.image ? `<img src="${escapeAttr(g.image)}" alt="${escapeAttr(g.name)} cover">` : `<span>🧩</span>`}
+            </div>
+            <div style="flex:1 1 auto; min-width: 220px;">
+              <div class="cardTitleRow">
+                <div class="titleBlock">
+                  <h2>${escapeHtml(g.name)}</h2>
+                  <div class="sub">${escapeHtml(g.description || 'No description provided.')}</div>
+                  <div class="badges">
+                    <span class="badge">
+                      Difficulty:
+                      <span class="difficultyDots" aria-label="Difficulty ${g.difficultyRating} out of 5">
+                        ${renderDots(g.difficultyRating)}
+                      </span>
+                    </span>
+                    <span class="badge">Achievements: ${unlocked}/${totalAch}</span>
+                  </div>
+                </div>
+                <button class="iconBtn" id="star_${cssId(g.id)}" title="Toggle favorite" aria-label="Toggle favorite">
+                  <span class="star ${fav ? 'on' : ''}">${fav ? '★' : '☆'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="cardActions">
+            <button class="primary" id="open_${cssId(g.id)}">Open Game</button>
+            <button class="success" id="rules_${cssId(g.id)}">Read Rules</button>
+            <button id="ach_${cssId(g.id)}">View Achievements</button>
+            <span class="spacer"></span>
+            <span class="pill">${escapeHtml(g.file)}</span>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderDots(n){
+      let out = '';
+      for(let i=1;i<=5;i++){
+        out += `<span class="dot ${i<=n ? 'on' : ''}"></span>`;
+      }
+      return out;
+    }
+
+    function toggleFavorite(id){
+      const cur = !!state.favorites[id];
+      state.favorites[id] = !cur;
+      saveJSON(LS_KEYS.favorites, state.favorites);
+      render();
+    }
+
+    function getFavorite(g){
+      if(Object.prototype.hasOwnProperty.call(state.favorites, g.id)) return !!state.favorites[g.id];
+      return !!g.isFavorite;
+    }
+
+    function countFavorites(all){
+      return all.reduce((acc,g) => acc + (getFavorite(g) ? 1 : 0), 0);
+    }
+
+    function openGame(g){
+      const url = `games/${g.file}?gameId=${encodeURIComponent(g.id)}&return=../index.html`;
+      window.location.href = url;
+    }
+
+    function showRules(g){
+      el.modalTitle.textContent = `${g.name} — Rules`;
+      const rules = (g.rules && g.rules.length)
+        ? `<ol>${g.rules.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ol>`
+        : `<p class="muted">No rules provided in games.json.</p>`;
+
+      el.modalBody.innerHTML = `
+        <p class="muted">Difficulty rating: <strong>${g.difficultyRating}/5</strong></p>
+        ${rules}
+      `;
+      openModal();
+    }
+
+    function showAchievements(g){
+      el.modalTitle.textContent = `${g.name} — Achievements`;
+      const list = g.achievements || [];
+      if(list.length === 0){
+        el.modalBody.innerHTML = `<p class="muted">No achievements listed for this game.</p>`;
+        openModal();
+        return;
+      }
+      const unlocked = list.filter(a => a.unlocked).length;
+      el.modalBody.innerHTML = `
+        <div class="row">
+          <span class="pill">Unlocked: ${unlocked}/${list.length}</span>
+        </div>
+        <div class="achGrid">
+          ${list.map(a => `
+            <div class="ach ${a.unlocked ? '' : 'locked'}">
+              <div class="badgeSmall">${a.unlocked ? 'Unlocked' : 'Locked'}</div>
+              <div>
+                <h4>${escapeHtml(a.title)}</h4>
+                <p>${escapeHtml(a.description)}</p>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      openModal();
+    }
+
+    function openModal(){
+      el.overlay.classList.add('open');
+    }
+    function closeModal(){
+      el.overlay.classList.remove('open');
+    }
+
+    function clampInt(v, min, max){
+      const n = parseInt(v, 10);
+      if(Number.isNaN(n)) return min;
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function cssId(s){
+      return String(s).replace(/[^a-zA-Z0-9_-]/g, '_');
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'",'&#039;');
+    }
+
+    function escapeAttr(str){
+      return escapeHtml(str);
+    }
+
+    function loadJSON(key, fallback){
+      try{
+        const raw = localStorage.getItem(key);
+        if(!raw) return fallback;
+        return JSON.parse(raw);
+      }catch{
+        return fallback;
+      }
+    }
+    function saveJSON(key, obj){
+      localStorage.setItem(key, JSON.stringify(obj));
+    }
+
+    function fallbackGames(){
+      return [
+        {
+          id: "hitori",
+          name: "Hitori",
+          file: "hitori.html",
+          image: "",
+          description: "Eliminate duplicates by shading cells while keeping all white cells connected.",
+          difficultyRating: 3,
+          isFavorite: false,
+          rules: [
+            "Each row and column may only contain each number once in white.",
+            "No two black cells may be adjacent orthogonally (diagonals allowed).",
+            "All white cells must form one connected orthogonal region."
+          ],
+          achievements: [
+            { id: "baby_steps", title: "Baby Steps", description: "Solve a 5x5 puzzle", unlocked: false },
+            { id: "getting_serious", title: "Getting Serious", description: "Solve an 8x8 puzzle", unlocked: false },
+            { id: "mastermind", title: "Mastermind", description: "Solve a 12x12 puzzle", unlocked: false },
+            { id: "pure_logic", title: "Pure Logic", description: "Solve without using Hint or Check", unlocked: false },
+            { id: "speed_demon", title: "Speed Demon", description: "Solve a 5x5 in under 30 seconds", unlocked: false }
+          ]
+        }
+      ];
+    }
+  </script>
+</body>
+</html>
