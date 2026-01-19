@@ -40,5 +40,27 @@
       { "id": "perfect_memory", "title": "Perfect Memory", "description": "Win with 8 moves or less", "unlocked": false },
       { "id": "persistent", "title": "Persistent", "description": "Complete 10 games", "unlocked": false }
     ]
+  },
+  {
+    "id": "slitherlink",
+    "name": "Slitherlink",
+    "file": "slitherlink.html",
+    "image": "",
+    "description": "Connect dots to form a single loop where numbers indicate how many sides are used.",
+    "difficultyRating": 4,
+    "isFavorite": false,
+    "rules": [
+      "Connect horizontally and vertically adjacent dots to form a single continuous loop.",
+      "Numbers indicate how many of the four sides around that cell are part of the loop.",
+      "The loop cannot cross itself, branch, or have loose ends.",
+      "Empty cells can have any number of sides (0-4) as part of the loop."
+    ],
+    "achievements": [
+      { "id": "baby_steps", "title": "Baby Steps", "description": "Solve a 5×5 puzzle", "unlocked": false },
+      { "id": "getting_serious", "title": "Getting Serious", "description": "Solve a 7×7 puzzle", "unlocked": false },
+      { "id": "expert_solver", "title": "Expert Solver", "description": "Solve a 12×12 puzzle", "unlocked": false },
+      { "id": "pure_logic", "title": "Pure Logic", "description": "Solve without using Hint or Check", "unlocked": false },
+      { "id": "speed_demon", "title": "Speed Demon", "description": "Solve a 5×5 in under 60 seconds", "unlocked": false }
+    ]
   }
 ]
