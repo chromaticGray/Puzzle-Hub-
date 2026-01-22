@@ -62,5 +62,28 @@
       { "id": "pure_logic", "title": "Pure Logic", "description": "Solve without using Hint or Check", "unlocked": false },
       { "id": "speed_demon", "title": "Speed Demon", "description": "Solve a 5×5 in under 60 seconds", "unlocked": false }
     ]
-  }
+  },
+    {
+    "id": "range",
+    "name": "Range (Kuromasu)",
+    "file": "kuromasu.html",
+    "image": "",
+    "description": "Shade cells black so numbers show their visible range in all four directions.",
+    "difficultyRating": 4,
+    "isFavorite": false,
+    "rules": [
+      "Color some squares black, leaving others white.",
+      "Numbered squares must stay white.",
+      "No two black squares can be adjacent (horizontally or vertically).",
+      "All white squares must be connected in one group.",
+      "Each number shows the total white squares visible from that square in all four directions (including itself)."
+    ],
+    "achievements": [
+      { "id": "baby_steps", "title": "Baby Steps", "description": "Solve a 6×6 puzzle", "unlocked": false },
+      { "id": "getting_serious", "title": "Getting Serious", "description": "Solve an 8×8 puzzle", "unlocked": false },
+      { "id": "expert_solver", "title": "Expert Solver", "description": "Solve a 12×12 puzzle", "unlocked": false },
+      { "id": "pure_logic", "title": "Pure Logic", "description": "Solve without using Hint or Check", "unlocked": false },
+      { "id": "speed_demon", "title": "Speed Demon", "description": "Solve a 6×6 in under 2 minutes", "unlocked": false }
+    ]
+    }
 ]
